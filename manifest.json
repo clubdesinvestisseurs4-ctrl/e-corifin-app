@@ -1,0 +1,88 @@
+{
+  "name": "E-Coris",
+  "short_name": "E-Coris",
+  "description": "Application de gestion financière personnelle et formation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00D9FF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/assets/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "education"],
+  "shortcuts": [
+    {
+      "name": "Nouvelle transaction",
+      "short_name": "Transaction",
+      "description": "Ajouter une nouvelle transaction",
+      "url": "/?action=new-transaction",
+      "icons": [{ "src": "/assets/icon-transaction.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Voir le tableau de bord",
+      "short_name": "Dashboard",
+      "description": "Accéder au tableau de bord financier",
+      "url": "/?view=dashboard",
+      "icons": [{ "src": "/assets/icon-dashboard.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-dashboard.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tableau de bord E-Coris"
+    }
+  ]
+}

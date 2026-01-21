@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0D1117">
+    <meta name="description" content="E-Coris - Gérez vos finances et apprenez à maîtriser votre argent">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    
+    <title>E-Coris | Gestion Financière & Formation</title>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <svg viewBox="0 0 100 100" class="logo-svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00D9FF"/>
+                            <stop offset="100%" style="stop-color:#7B2DFF"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" stroke-width="3"/>
+                    <text x="50" y="62" text-anchor="middle" fill="url(#logoGradient)" font-size="32" font-weight="700" font-family="Outfit">€</text>
+                </svg>
+            </div>
+            <h1 class="splash-title">E-Coris</h1>
+            <p class="splash-subtitle">Maîtrisez votre avenir financier</p>
+            <div class="splash-loader">
+                <div class="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="app-container hidden">
+        <!-- Auth Section -->
+        <section id="auth-section" class="auth-section">
+            <div class="auth-background">
+                <div class="gradient-orb orb-1"></div>
+                <div class="gradient-orb orb-2"></div>
+                <div class="grid-overlay"></div>
+            </div>
+            
+            <div class="auth-content">
+                <div class="auth-header">
+                    <div class="logo-mark">
+                        <svg viewBox="0 0 60 60">
+                            <defs>
+                                <linearGradient id="authLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#00D9FF"/>
+                                    <stop offset="100%" style="stop-color:#7B2DFF"/>
+                                </linearGradient>
+                            </defs>
+                            <circle cx="30" cy="30" r="28" fill="none" stroke="url(#authLogoGrad)" stroke-width="2"/>
+                            <text x="30" y="38" text-anchor="middle" fill="url(#authLogoGrad)" font-size="24" font-weight="700" font-family="Outfit">€</text>
+                        </svg>
+                    </div>
+                    <h1>E-Coris</h1>
+                    <p class="tagline">Votre compagnon financier intelligent</p>
+                </div>
+
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form">
+                    <h2>Connexion</h2>
+                    <form onsubmit="return handleLogin(event)">
+                        <div class="form-group">
+                            <label for="login-email">Email</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <input type="email" id="login-email" required placeholder="votre@email.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Mot de passe</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input type="password" id="login-password" required placeholder="••••••••">
+                                <button type="button" class="password-toggle" onclick="togglePassword('login-password')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span>Se connecter</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </form>
+                    <p class="auth-switch">
+                        Pas encore de compte ? 
+                        <a href="#" onclick="showRegister()">Créer un compte</a>
+                    </p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="auth-form hidden">
+                    <h2>Créer un compte</h2>
+                    <form onsubmit="return handleRegister(event)">
+                        <div class="form-group">
+                            <label for="register-name">Nom complet</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <input type="text" id="register-name" required placeholder="Jean Dupont">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <input type="email" id="register-email" required placeholder="votre@email.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Mot de passe</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input type="password" id="register-password" required minlength="6" placeholder="Min. 6 caractères">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="purchase-code">Code d'achat formation (optionnel)</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <path d="M9 9h.01M15 15h.01M9 15l6-6"/>
+                                </svg>
+                                <input type="text" id="purchase-code" placeholder="XXXX-XXXX-XXXX">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span>Créer mon compte</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </form>
+                    <p class="auth-switch">
+                        Déjà un compte ? 
+                        <a href="#" onclick="showLogin()">Se connecter</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main App -->
+        <main id="main-app" class="main-app hidden">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 class="app-title">E-Coris</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" onclick="showProfile()" aria-label="Profil">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="finances" onclick="switchTab('finances')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <path d="M2 10h20"/>
+                    </svg>
+                    <span>Finances</span>
+                </button>
+                <button class="tab-btn" data-tab="formation" onclick="switchTab('formation')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                    <span>Formation</span>
+                    <span id="formation-lock" class="tab-lock">🔒</span>
+                </button>
+            </nav>
+
+            <!-- Finances Tab Content -->
+            <div id="finances-content" class="tab-content active">
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="view active">
+                    <div class="dashboard-header">
+                        <div class="greeting">
+                            <h2>Bonjour, <span id="user-name">Utilisateur</span> 👋</h2>
+                            <p id="current-date"></p>
+                        </div>
+                        <div class="period-selector">
+                            <select id="period-month" onchange="loadDashboard()"></select>
+                            <select id="period-year" onchange="loadDashboard()"></select>
+                        </div>
+                    </div>
+
+                    <!-- Balance Cards -->
+                    <div class="balance-cards">
+                        <div class="balance-card balance-main">
+                            <div class="card-label">Solde du mois</div>
+                            <div class="card-amount" id="monthly-balance">0 FCFA</div>
+                            <div class="card-trend" id="balance-trend"></div>
+                        </div>
+                        <div class="balance-row">
+                            <div class="balance-card balance-income">
+                                <div class="card-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 19V5M5 12l7-7 7 7"/>
+                                    </svg>
+                                </div>
+                                <div class="card-info">
+                                    <div class="card-label">Revenus</div>
+                                    <div class="card-amount" id="monthly-income">0 FCFA</div>
+                                </div>
+                            </div>
+                            <div class="balance-card balance-expense">
+                                <div class="card-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 5v14M5 12l7 7 7-7"/>
+                                    </svg>
+                                </div>
+                                <div class="card-info">
+                                    <div class="card-label">Dépenses</div>
+                                    <div class="card-amount" id="monthly-expense">0 FCFA</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div id="budget-alerts" class="alerts-container"></div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <button class="action-btn action-income" onclick="showAddTransaction('income')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 8v8M8 12h8"/>
+                            </svg>
+                            <span>Revenu</span>
+                        </button>
+                        <button class="action-btn action-expense" onclick="showAddTransaction('expense')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 12h8"/>
+                            </svg>
+                            <span>Dépense</span>
+                        </button>
+                        <button class="action-btn action-budget" onclick="showBudgets()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17,8 12,3 7,8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Budgets</span>
+                        </button>
+                    </div>
+
+                    <!-- Expense Chart -->
+                    <div class="chart-section">
+                        <h3>Répartition des dépenses</h3>
+                        <div class="chart-container">
+                            <canvas id="expense-chart"></canvas>
+                        </div>
+                        <div id="expense-legend" class="chart-legend"></div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="recent-section">
+                        <div class="section-header">
+                            <h3>Transactions récentes</h3>
+                            <button class="btn-link" onclick="showTransactions()">Voir tout</button>
+                        </div>
+                        <div id="recent-transactions" class="transaction-list"></div>
+                    </div>
+                </div>
+
+                <!-- Transactions View -->
+                <div id="transactions-view" class="view">
+                    <div class="view-header">
+                        <button class="btn-back" onclick="showDashboard()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h2>Transactions</h2>
+                        <button class="btn-icon" onclick="showTransactionFilters()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="transaction-filters" class="filters-panel hidden">
+                        <select id="filter-type" onchange="filterTransactions()">
+                            <option value="">Tous les types</option>
+                            <option value="income">Revenus</option>
+                            <option value="expense">Dépenses</option>
+                        </select>
+                        <select id="filter-category" onchange="filterTransactions()">
+                            <option value="">Toutes les catégories</option>
+                        </select>
+                    </div>
+                    <div id="all-transactions" class="transaction-list"></div>
+                </div>
+
+                <!-- Budgets View -->
+                <div id="budgets-view" class="view">
+                    <div class="view-header">
+                        <button class="btn-back" onclick="showDashboard()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h2>Budgets</h2>
+                        <button class="btn-icon" onclick="showAddBudget()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 8v8M8 12h8"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="budgets-tracking" class="budgets-grid"></div>
+                </div>
+            </div>
+
+            <!-- Formation Tab Content -->
+            <div id="formation-content" class="tab-content">
+                <!-- Formation Locked -->
+                <div id="formation-locked" class="formation-locked">
+                    <div class="locked-content">
+                        <div class="locked-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </div>
+                        <h2>Formation Premium</h2>
+                        <p>Débloquez l'accès à notre formation complète sur la gestion financière personnelle.</p>
+                        <ul class="formation-features">
+                            <li>✓ Chapitres vidéo détaillés</li>
+                            <li>✓ Exercices pratiques</li>
+                            <li>✓ Suivi de progression</li>
+                            <li>✓ Certificat de fin</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" onclick="openPurchasePage()">
+                            <span>Acheter la formation</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                        <p class="activate-hint">Vous avez déjà acheté ? <a href="#" onclick="showActivateCode()">Activer mon code</a></p>
+                    </div>
+                </div>
+
+                <!-- Formation Unlocked -->
+                <div id="formation-unlocked" class="formation-unlocked hidden">
+                    <!-- Chapters List View -->
+                    <div id="chapters-view" class="view active">
+                        <div class="formation-header">
+                            <h2>Ma Formation</h2>
+                            <div class="progress-overview">
+                                <div class="progress-ring">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="#2D3748" stroke-width="8"/>
+                                        <circle id="progress-circle" cx="50" cy="50" r="45" fill="none" stroke="url(#progressGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
+                                        <defs>
+                                            <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" style="stop-color:#00D9FF"/>
+                                                <stop offset="100%" style="stop-color:#7B2DFF"/>
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <span id="progress-text">0%</span>
+                                </div>
+                                <div class="progress-info">
+                                    <span id="completed-lessons">0</span> / <span id="total-lessons">0</span> leçons
+                                </div>
+                            </div>
+                        </div>
+                        <div id="chapters-list" class="chapters-list"></div>
+                    </div>
+
+                    <!-- Lessons List View -->
+                    <div id="lessons-view" class="view">
+                        <div class="view-header">
+                            <button class="btn-back" onclick="showChapters()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <h2 id="chapter-title">Chapitre</h2>
+                        </div>
+                        <p id="chapter-description" class="chapter-description"></p>
+                        <div id="lessons-list" class="lessons-list"></div>
+                    </div>
+
+                    <!-- Lesson Content View -->
+                    <div id="lesson-view" class="view">
+                        <div class="view-header">
+                            <button class="btn-back" onclick="backToLessons()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <h2 id="lesson-title">Leçon</h2>
+                        </div>
+                        <div class="lesson-content">
+                            <div id="video-container" class="video-container"></div>
+                            <div id="lesson-text" class="lesson-text"></div>
+                            <div class="lesson-navigation">
+                                <button id="prev-lesson" class="btn btn-secondary" onclick="goToPrevLesson()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                    </svg>
+                                    <span>Précédent</span>
+                                </button>
+                                <button id="complete-lesson" class="btn btn-primary" onclick="markLessonComplete()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 6L9 17l-5-5"/>
+                                    </svg>
+                                    <span>Terminer</span>
+                                </button>
+                                <button id="next-lesson" class="btn btn-secondary" onclick="goToNextLesson()">
+                                    <span>Suivant</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()"></div>
+
+        <!-- Add Transaction Modal -->
+        <div id="transaction-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3 id="transaction-modal-title">Ajouter une transaction</h3>
+                <button class="btn-close" onclick="closeModal()">×</button>
+            </div>
+            <form id="transaction-form" onsubmit="return saveTransaction(event)">
+                <input type="hidden" id="transaction-id">
+                <input type="hidden" id="transaction-type-hidden">
+                
+                <div class="form-group">
+                    <label for="transaction-amount">Montant (FCFA)</label>
+                    <input type="number" id="transaction-amount" required min="1" step="1" placeholder="10000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-category">Catégorie</label>
+                    <select id="transaction-category" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-date">Date</label>
+                    <input type="date" id="transaction-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-description">Description (optionnel)</label>
+                    <input type="text" id="transaction-description" placeholder="Ex: Salaire janvier">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Add Budget Modal -->
+        <div id="budget-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3>Nouveau budget</h3>
+                <button class="btn-close" onclick="closeModal()">×</button>
+            </div>
+            <form id="budget-form" onsubmit="return saveBudget(event)">
+                <div class="form-group">
+                    <label for="budget-category">Catégorie</label>
+                    <select id="budget-category" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget-amount">Montant limite (FCFA)</label>
+                    <input type="number" id="budget-amount" required min="1" step="1" placeholder="50000">
+                </div>
+                
+                <div class="form-group budget-period">
+                    <label>Période</label>
+                    <div class="period-inputs">
+                        <select id="budget-month"></select>
+                        <select id="budget-year"></select>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Profile Modal -->
+        <div id="profile-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3>Mon Profil</h3>
+                <button class="btn-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="profile-content">
+                <div class="profile-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <div class="profile-info">
+                    <h4 id="profile-name">Utilisateur</h4>
+                    <p id="profile-email">email@example.com</p>
+                    <span id="profile-badge" class="badge">Compte gratuit</span>
+                </div>
+                <div class="profile-stats" id="profile-stats"></div>
+                <button class="btn btn-danger btn-full" onclick="logout()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Activate Code Modal -->
+        <div id="activate-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3>Activer ma formation</h3>
+                <button class="btn-close" onclick="closeModal()">×</button>
+            </div>
+            <form onsubmit="return activateFormation(event)">
+                <div class="form-group">
+                    <label for="activate-code">Code d'activation</label>
+                    <input type="text" id="activate-code" required placeholder="XXXX-XXXX-XXXX" pattern="[A-Za-z0-9\-]+">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Activer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/finances.js"></script>
+    <script src="js/formation.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
