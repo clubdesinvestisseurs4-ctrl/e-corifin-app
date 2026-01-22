@@ -1,26 +1,18 @@
 /**
  * E-Coris - Application principale
- * Initialisation et gestion de la navigation
  */
 
-// État de l'application
+// État global
 let currentTab = 'finances';
-let currentFinanceView = 'dashboard';
-let appInitialized = false;
-
-// ==================== INITIALISATION ====================
 
 /**
  * Initialiser l'application
  */
-async function initializeApp() {
-    if (appInitialized) {
-        // Si déjà initialisé, juste afficher l'app principale
-        showMainApp();
-        return;
-    }
-    
+async function initApp() {
     console.log('🚀 Initialisation E-Coris...');
+    
+    // Initialiser les sélecteurs de période
+    initPeriodSelectors();
     
     // Masquer le splash après un délai
     setTimeout(hideSplash, 1500);
@@ -30,8 +22,7 @@ async function initializeApp() {
     
     if (isLoggedIn) {
         showMainApp();
-        await loadInitialData();
-        appInitialized = true;
+        loadInitialData();
     } else {
         showAuthSection();
     }
@@ -47,7 +38,6 @@ function hideSplash() {
         setTimeout(() => splash.style.display = 'none', 500);
     }
     
-    // Afficher l'app container
     const app = document.getElementById('app');
     if (app) {
         app.classList.remove('hidden');
@@ -55,14 +45,28 @@ function hideSplash() {
 }
 
 /**
+ * Afficher la section d'authentification
+ */
+function showAuthSection() {
+    document.getElementById('auth-section').classList.remove('hidden');
+    document.getElementById('main-app').classList.add('hidden');
+}
+
+/**
+ * Afficher l'application principale
+ */
+function showMainApp() {
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+}
+
+/**
  * Charger les données initiales
  */
 async function loadInitialData() {
     try {
-        // Charger en parallèle
         await Promise.all([
             loadDashboard(),
-            loadTransactions(),
             checkFormationAccess()
         ]);
     } catch (error) {
@@ -70,10 +74,31 @@ async function loadInitialData() {
     }
 }
 
-// ==================== NAVIGATION ====================
+/**
+ * Initialiser les sélecteurs de période
+ */
+function initPeriodSelectors() {
+    const monthSelect = document.getElementById('period-month');
+    const yearSelect = document.getElementById('period-year');
+    
+    if (monthSelect && yearSelect) {
+        const now = new Date();
+        
+        // Mois
+        monthSelect.innerHTML = MONTHS.map((m, i) => 
+            `<option value="${i + 1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`
+        ).join('');
+        
+        // Années
+        const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+        yearSelect.innerHTML = years.map(y => 
+            `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`
+        ).join('');
+    }
+}
 
 /**
- * Changer d'onglet principal
+ * Changer d'onglet
  */
 function switchTab(tab) {
     currentTab = tab;
@@ -84,151 +109,97 @@ function switchTab(tab) {
     });
     
     // Mettre à jour les contenus
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.toggle('active', content.id === `${tab}-tab`);
-    });
-    
-    // Charger les données si nécessaire
-    if (tab === 'formation') {
-        checkFormationAccess();
-    } else if (tab === 'finances') {
-        if (currentFinanceView === 'dashboard') {
-            loadDashboard();
-        }
-    }
-}
-
-/**
- * Changer de vue dans l'onglet finances
- */
-function switchFinanceView(view) {
-    currentFinanceView = view;
-    
-    // Mettre à jour les boutons
-    document.querySelectorAll('.finance-nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.view === view);
-    });
-    
-    // Mettre à jour les vues
-    document.querySelectorAll('.finance-view').forEach(v => {
-        v.classList.toggle('active', v.id === `${view}-view`);
-    });
+    document.getElementById('finances-content').classList.toggle('active', tab === 'finances');
+    document.getElementById('formation-content').classList.toggle('active', tab === 'formation');
     
     // Charger les données
-    switch (view) {
-        case 'dashboard':
-            loadDashboard();
-            break;
-        case 'transactions':
-            loadTransactions();
-            break;
-        case 'budgets':
-            loadBudgets();
-            break;
+    if (tab === 'finances') {
+        showDashboard();
+    } else if (tab === 'formation') {
+        checkFormationAccess();
     }
 }
-
-// ==================== MODALS ====================
 
 /**
  * Ouvrir un modal
  */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modal-overlay');
+    
     if (modal) {
+        modal.classList.remove('hidden');
         modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
     }
+    if (overlay) {
+        overlay.classList.remove('hidden');
+    }
+    
+    document.body.style.overflow = 'hidden';
 }
 
 /**
- * Fermer le modal actif
+ * Fermer tous les modals
  */
 function closeModal() {
-    document.querySelectorAll('.modal.active').forEach(modal => {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.add('hidden');
         modal.classList.remove('active');
     });
+    
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+    
     document.body.style.overflow = '';
 }
 
-// ==================== EVENT LISTENERS ====================
-
 /**
- * Configurer les event listeners au chargement du DOM
+ * Afficher un toast
  */
-document.addEventListener('DOMContentLoaded', function() {
-    // Navigation principale (onglets)
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
-    
-    // Navigation finances (sous-menu)
-    document.querySelectorAll('.finance-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchFinanceView(btn.dataset.view));
-    });
-    
-    // Changement de type de transaction
-    const transactionType = document.getElementById('transaction-type');
-    if (transactionType) {
-        transactionType.addEventListener('change', (e) => {
-            updateCategoryOptions(e.target.value);
-        });
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
     }
     
-    // Fermeture des modals avec overlay
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', closeModal);
-    });
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
     
-    // Fermeture avec Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
     
-    // Fermeture avec bouton close
-    document.querySelectorAll('.modal-close').forEach(btn => {
-        btn.addEventListener('click', closeModal);
-    });
+    container.appendChild(toast);
     
-    // Initialiser l'application
-    initializeApp();
-});
-
-// ==================== UTILITAIRES GLOBAUX ====================
-
-/**
- * Rafraîchir la vue courante
- */
-async function refreshCurrentView() {
-    try {
-        if (currentTab === 'finances') {
-            switch (currentFinanceView) {
-                case 'dashboard':
-                    await loadDashboard();
-                    break;
-                case 'transactions':
-                    await loadTransactions();
-                    break;
-                case 'budgets':
-                    await loadBudgets();
-                    break;
-            }
-        } else if (currentTab === 'formation') {
-            await loadChapters();
-        }
-        showToast('Données actualisées', 'success');
-    } catch (error) {
-        showToast('Erreur lors de l\'actualisation', 'error');
-    }
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
-// Export pour le débogage
-window.ECoris = {
-    switchTab,
-    switchFinanceView,
-    refreshCurrentView,
-    openModal,
-    closeModal
-};
+// Initialiser au chargement
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Fermer modal avec Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// Exposer globalement
+window.initApp = initApp;
+window.showAuthSection = showAuthSection;
+window.showMainApp = showMainApp;
+window.loadInitialData = loadInitialData;
+window.switchTab = switchTab;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.showToast = showToast;
+
+console.log('✅ App module chargé');

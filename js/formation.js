@@ -1,25 +1,22 @@
 /**
  * E-Coris - Module Formation
- * Gestion des chapitres, leçons et progression
  */
 
 // État local
 let chapters = [];
 let currentChapter = null;
+let currentLessons = [];
 let currentLesson = null;
-let formationProgress = { completed: 0, total: 0, percentage: 0 };
+let currentLessonIndex = 0;
 let hasFormationAccess = false;
-
-// ==================== VÉRIFICATION D'ACCÈS ====================
 
 /**
  * Vérifier l'accès à la formation
  */
 async function checkFormationAccess() {
     try {
-        const data = await API.getFormationAccessStatus();
-        hasFormationAccess = data.hasAccess;
-        
+        const data = await API.getFormationStatus();
+        hasFormationAccess = data.hasAccess || false;
         updateFormationUI();
         return hasFormationAccess;
     } catch (error) {
@@ -31,53 +28,65 @@ async function checkFormationAccess() {
 }
 
 /**
- * Mettre à jour l'UI selon l'accès
+ * Mettre à jour l'interface selon l'accès
  */
 function updateFormationUI() {
-    const lockedView = document.getElementById('formation-locked');
-    const contentView = document.getElementById('formation-content');
+    const lockedEl = document.getElementById('formation-locked');
+    const unlockedEl = document.getElementById('formation-unlocked');
+    const lockIcon = document.getElementById('formation-lock');
     
-    if (lockedView && contentView) {
-        if (hasFormationAccess) {
-            lockedView.style.display = 'none';
-            contentView.style.display = 'block';
-            loadChapters();
-        } else {
-            lockedView.style.display = 'flex';
-            contentView.style.display = 'none';
-        }
+    if (hasFormationAccess) {
+        if (lockedEl) lockedEl.classList.add('hidden');
+        if (unlockedEl) unlockedEl.classList.remove('hidden');
+        if (lockIcon) lockIcon.style.display = 'none';
+        loadChapters();
+    } else {
+        if (lockedEl) lockedEl.classList.remove('hidden');
+        if (unlockedEl) unlockedEl.classList.add('hidden');
+        if (lockIcon) lockIcon.style.display = 'inline';
     }
 }
 
 /**
- * Activer l'accès avec un code
+ * Afficher le modal d'activation
  */
-async function activateFormation() {
-    const codeInput = document.getElementById('activate-code');
-    const code = codeInput ? codeInput.value.trim() : '';
+function showActivateCode() {
+    document.getElementById('activate-code').value = '';
+    openModal('activate-modal');
+}
+
+/**
+ * Activer la formation avec un code
+ */
+async function activateFormation(event) {
+    event.preventDefault();
+    
+    const code = document.getElementById('activate-code').value.trim();
     
     if (!code) {
-        showToast('Veuillez entrer un code d\'activation', 'error');
-        return;
+        showToast('Veuillez entrer un code', 'error');
+        return false;
     }
     
     try {
-        // Appeler l'API d'activation
-        const response = await API.post('/auth/activate', { code }, true);
-        
-        if (response.success) {
-            hasFormationAccess = true;
-            showToast('Formation activée avec succès !', 'success');
-            closeModal();
-            updateFormationUI();
-        }
+        await API.activateCode(code);
+        hasFormationAccess = true;
+        showToast('Formation activée !', 'success');
+        closeModal();
+        updateFormationUI();
     } catch (error) {
-        console.error('Erreur activation:', error);
-        showToast(error.message || 'Code invalide ou déjà utilisé', 'error');
+        showToast(error.message || 'Code invalide', 'error');
     }
+    
+    return false;
 }
 
-// ==================== CHAPITRES ====================
+/**
+ * Ouvrir la page d'achat
+ */
+function openPurchasePage() {
+    showToast('Page d\'achat bientôt disponible', 'info');
+}
 
 /**
  * Charger les chapitres
@@ -92,410 +101,289 @@ async function loadChapters() {
         ]);
         
         chapters = chaptersData.chapters || [];
-        formationProgress = progressData || { completed: 0, total: 0, percentage: 0 };
-        
-        renderChapters();
-        renderProgressBar();
+        renderChapters(progressData);
+        updateProgressRing(progressData);
         
     } catch (error) {
         console.error('Erreur chargement chapitres:', error);
-        showToast('Erreur lors du chargement des chapitres', 'error');
     }
 }
 
 /**
  * Afficher les chapitres
  */
-function renderChapters() {
+function renderChapters(progress) {
     const container = document.getElementById('chapters-list');
     if (!container) return;
     
     if (chapters.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                </svg>
-                <p>Aucun contenu disponible pour le moment</p>
-            </div>
-        `;
+        container.innerHTML = '<p class="empty-list">Aucun chapitre disponible</p>';
         return;
     }
     
-    let html = '';
-    
-    for (const chapter of chapters) {
+    container.innerHTML = chapters.map((chapter, index) => {
         const chapterProgress = chapter.progress || { completed: 0, total: 0 };
         const percentage = chapterProgress.total > 0 
             ? Math.round((chapterProgress.completed / chapterProgress.total) * 100) 
             : 0;
-        const isCompleted = percentage === 100;
         
-        html += `
-            <div class="chapter-card ${isCompleted ? 'completed' : ''}" data-id="${chapter.id}">
-                <div class="chapter-header" onclick="toggleChapter('${chapter.id}')">
-                    <div class="chapter-info">
-                        <span class="chapter-number">Chapitre ${chapter.order || ''}</span>
-                        <h3 class="chapter-title">${chapter.title}</h3>
-                        <p class="chapter-description">${chapter.description || ''}</p>
-                    </div>
-                    <div class="chapter-status">
-                        <div class="chapter-progress-ring" data-percentage="${percentage}">
-                            <svg viewBox="0 0 36 36">
-                                <path class="progress-bg"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none" stroke="#333" stroke-width="3"/>
-                                <path class="progress-fill"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none" stroke="#00D9FF" stroke-width="3"
-                                    stroke-dasharray="${percentage}, 100"/>
-                            </svg>
-                            <span class="progress-text">${percentage}%</span>
-                        </div>
-                        <svg class="chapter-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                            <polyline points="6 9 12 15 18 9"/>
-                        </svg>
+        return `
+            <div class="chapter-card" onclick="openChapter('${chapter.id}')">
+                <div class="chapter-number">${index + 1}</div>
+                <div class="chapter-info">
+                    <h3 class="chapter-title">${chapter.title}</h3>
+                    <p class="chapter-desc">${chapter.description || ''}</p>
+                    <div class="chapter-meta">
+                        <span class="lessons-count">${chapterProgress.total || 0} leçons</span>
+                        <span class="chapter-progress">${percentage}% complété</span>
                     </div>
                 </div>
-                <div class="chapter-lessons" id="chapter-lessons-${chapter.id}">
-                    <div class="lessons-loading">
-                        <div class="spinner"></div>
-                    </div>
+                <div class="chapter-status">
+                    ${percentage === 100 ? '✅' : percentage > 0 ? '🔄' : '⭕'}
                 </div>
             </div>
         `;
-    }
-    
-    container.innerHTML = html;
+    }).join('');
 }
 
 /**
- * Afficher la barre de progression globale
+ * Mettre à jour l'anneau de progression
  */
-function renderProgressBar() {
-    const progressBar = document.getElementById('formation-progress-bar');
-    const progressText = document.getElementById('formation-progress-text');
+function updateProgressRing(progress) {
+    const circle = document.getElementById('progress-circle');
+    const text = document.getElementById('progress-text');
+    const completed = document.getElementById('completed-lessons');
+    const total = document.getElementById('total-lessons');
     
-    if (progressBar) {
-        progressBar.style.width = `${formationProgress.percentage || 0}%`;
+    const percentage = progress.percentage || 0;
+    
+    if (circle) {
+        const offset = 283 - (283 * percentage / 100);
+        circle.style.strokeDashoffset = offset;
     }
     
-    if (progressText) {
-        progressText.textContent = `${formationProgress.completed || 0}/${formationProgress.total || 0} leçons complétées`;
-    }
+    if (text) text.textContent = Math.round(percentage) + '%';
+    if (completed) completed.textContent = progress.completed || 0;
+    if (total) total.textContent = progress.total || 0;
 }
 
 /**
- * Ouvrir/fermer un chapitre
+ * Ouvrir un chapitre
  */
-async function toggleChapter(chapterId) {
-    const lessonsContainer = document.getElementById(`chapter-lessons-${chapterId}`);
-    const chapterCard = lessonsContainer ? lessonsContainer.closest('.chapter-card') : null;
-    
-    if (!lessonsContainer || !chapterCard) return;
-    
-    const isOpen = chapterCard.classList.contains('expanded');
-    
-    // Fermer tous les autres chapitres
-    document.querySelectorAll('.chapter-card.expanded').forEach(card => {
-        if (card !== chapterCard) {
-            card.classList.remove('expanded');
-        }
-    });
-    
-    if (isOpen) {
-        chapterCard.classList.remove('expanded');
-    } else {
-        chapterCard.classList.add('expanded');
-        await loadLessons(chapterId);
-    }
-}
-
-// ==================== LEÇONS ====================
-
-/**
- * Charger les leçons d'un chapitre
- */
-async function loadLessons(chapterId) {
-    const container = document.getElementById(`chapter-lessons-${chapterId}`);
-    if (!container) return;
+async function openChapter(chapterId) {
+    currentChapter = chapters.find(c => c.id === chapterId);
+    if (!currentChapter) return;
     
     try {
         const data = await API.getLessons(chapterId);
-        const lessons = data.lessons || [];
+        currentLessons = data.lessons || [];
         
-        renderLessons(container, lessons);
+        // Mettre à jour l'UI
+        document.getElementById('chapter-title').textContent = currentChapter.title;
+        document.getElementById('chapter-description').textContent = currentChapter.description || '';
+        
+        renderLessons();
+        
+        // Changer de vue
+        document.getElementById('chapters-view').classList.remove('active');
+        document.getElementById('lessons-view').classList.add('active');
         
     } catch (error) {
         console.error('Erreur chargement leçons:', error);
-        container.innerHTML = `
-            <div class="lessons-error">
-                <p>Erreur lors du chargement</p>
-                <button class="btn btn-sm" onclick="toggleChapter('${chapterId}')">
-                    Réessayer
-                </button>
-            </div>
-        `;
+        showToast('Erreur lors du chargement', 'error');
     }
 }
 
 /**
  * Afficher les leçons
  */
-function renderLessons(container, lessons) {
-    if (lessons.length === 0) {
-        container.innerHTML = `
-            <div class="lessons-empty">
-                <p>Aucune leçon dans ce chapitre</p>
-            </div>
-        `;
+function renderLessons() {
+    const container = document.getElementById('lessons-list');
+    if (!container) return;
+    
+    if (currentLessons.length === 0) {
+        container.innerHTML = '<p class="empty-list">Aucune leçon dans ce chapitre</p>';
         return;
     }
     
-    let html = '<div class="lessons-list">';
-    
-    for (const lesson of lessons) {
+    container.innerHTML = currentLessons.map((lesson, index) => {
         const isCompleted = lesson.completed;
-        const duration = lesson.duration ? formatDuration(lesson.duration) : '';
-        
-        html += `
-            <div class="lesson-item ${isCompleted ? 'completed' : ''}" onclick="openLesson('${lesson.id}')">
-                <div class="lesson-status">
-                    ${isCompleted 
-                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' 
-                        : '<span class="lesson-number">' + (lesson.order || '') + '</span>'}
-                </div>
+        return `
+            <div class="lesson-card ${isCompleted ? 'completed' : ''}" onclick="openLesson(${index})">
+                <div class="lesson-number">${isCompleted ? '✅' : index + 1}</div>
                 <div class="lesson-info">
-                    <span class="lesson-title">${lesson.title}</span>
-                    ${duration ? `<span class="lesson-duration"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${duration}</span>` : ''}
+                    <h4 class="lesson-title">${lesson.title}</h4>
+                    <span class="lesson-duration">${lesson.duration || '5'} min</span>
                 </div>
-                <svg class="lesson-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                    <polyline points="9 18 15 12 9 6"/>
-                </svg>
+                <div class="lesson-arrow">→</div>
             </div>
         `;
-    }
-    
-    html += '</div>';
-    container.innerHTML = html;
+    }).join('');
 }
 
 /**
  * Ouvrir une leçon
  */
-async function openLesson(lessonId) {
+async function openLesson(index) {
+    currentLessonIndex = index;
+    currentLesson = currentLessons[index];
+    
+    if (!currentLesson) return;
+    
     try {
-        // Afficher la vue leçon
-        document.getElementById('chapters-view').style.display = 'none';
-        document.getElementById('lesson-view').style.display = 'block';
+        const data = await API.getLesson(currentLesson.id);
+        currentLesson = { ...currentLesson, ...data.lesson };
         
-        const data = await API.getLesson(lessonId);
-        currentLesson = data.lesson;
+        renderLessonContent();
         
-        renderLesson();
+        // Changer de vue
+        document.getElementById('lessons-view').classList.remove('active');
+        document.getElementById('lesson-view').classList.add('active');
         
     } catch (error) {
         console.error('Erreur chargement leçon:', error);
-        showToast('Erreur lors du chargement de la leçon', 'error');
-        closeLesson();
+        showToast('Erreur lors du chargement', 'error');
     }
 }
 
 /**
  * Afficher le contenu d'une leçon
  */
-function renderLesson() {
-    const container = document.getElementById('lesson-content');
-    if (!container || !currentLesson) return;
+function renderLessonContent() {
+    document.getElementById('lesson-title').textContent = currentLesson.title;
     
-    const videoHtml = currentLesson.videoUrl 
-        ? renderVideoPlayer(currentLesson.videoUrl)
-        : '';
+    // Vidéo
+    const videoContainer = document.getElementById('video-container');
+    if (currentLesson.videoUrl) {
+        videoContainer.innerHTML = renderVideo(currentLesson.videoUrl);
+    } else {
+        videoContainer.innerHTML = '';
+    }
     
-    container.innerHTML = `
-        <div class="lesson-header">
-            <button class="btn-back" onclick="closeLesson()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                    <line x1="19" y1="12" x2="5" y2="12"/>
-                    <polyline points="12 19 5 12 12 5"/>
-                </svg>
-                Retour aux chapitres
-            </button>
-            <h2 class="lesson-title">${currentLesson.title}</h2>
-        </div>
-        
-        ${videoHtml}
-        
-        <div class="lesson-text">
-            ${currentLesson.content || ''}
-        </div>
-        
-        <div class="lesson-actions">
-            ${!currentLesson.completed ? `
-                <button class="btn btn-primary btn-complete" onclick="completeLesson()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Marquer comme terminé
-                </button>
-            ` : `
-                <div class="lesson-completed-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                    Leçon terminée
-                </div>
-            `}
-        </div>
-    `;
+    // Texte
+    const textContainer = document.getElementById('lesson-text');
+    textContainer.innerHTML = currentLesson.content || '<p>Aucun contenu textuel</p>';
+    
+    // Navigation
+    document.getElementById('prev-lesson').style.display = currentLessonIndex > 0 ? 'flex' : 'none';
+    document.getElementById('next-lesson').style.display = currentLessonIndex < currentLessons.length - 1 ? 'flex' : 'none';
+    
+    // Bouton terminer
+    const completeBtn = document.getElementById('complete-lesson');
+    if (currentLesson.completed) {
+        completeBtn.innerHTML = '✅ <span>Terminé</span>';
+        completeBtn.disabled = true;
+    } else {
+        completeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span>Terminer</span>';
+        completeBtn.disabled = false;
+    }
 }
 
 /**
- * Rendre le lecteur vidéo
+ * Rendre la vidéo
  */
-function renderVideoPlayer(url) {
-    // Déterminer le type de lien
+function renderVideo(url) {
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = url.includes('youtu.be') 
+            ? url.split('/').pop().split('?')[0]
+            : url.split('v=')[1]?.split('&')[0];
+        if (videoId) {
+            return `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
+        }
+    }
+    
+    // Google Drive
     if (url.includes('drive.google.com')) {
-        // Google Drive - convertir en lien d'embed
-        const fileId = extractGoogleDriveId(url);
+        const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || url.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
         if (fileId) {
-            return `
-                <div class="video-container">
-                    <iframe src="https://drive.google.com/file/d/${fileId}/preview" 
-                            allowfullscreen 
-                            allow="autoplay; encrypted-media">
-                    </iframe>
-                </div>
-            `;
+            return `<iframe src="https://drive.google.com/file/d/${fileId}/preview" allowfullscreen></iframe>`;
         }
-    } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        // YouTube
-        const videoId = extractYoutubeId(url);
+    }
+    
+    // Vimeo
+    if (url.includes('vimeo.com')) {
+        const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
         if (videoId) {
-            return `
-                <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/${videoId}" 
-                            allowfullscreen 
-                            allow="autoplay; encrypted-media">
-                    </iframe>
-                </div>
-            `;
-        }
-    } else if (url.includes('vimeo.com')) {
-        // Vimeo
-        const videoId = extractVimeoId(url);
-        if (videoId) {
-            return `
-                <div class="video-container">
-                    <iframe src="https://player.vimeo.com/video/${videoId}" 
-                            allowfullscreen 
-                            allow="autoplay; encrypted-media">
-                    </iframe>
-                </div>
-            `;
+            return `<iframe src="https://player.vimeo.com/video/${videoId}" allowfullscreen></iframe>`;
         }
     }
     
-    // Lien direct ou autre
-    return `
-        <div class="video-container">
-            <video controls>
-                <source src="${url}" type="video/mp4">
-                Votre navigateur ne supporte pas la lecture vidéo.
-            </video>
-        </div>
-    `;
+    // Lien direct
+    return `<video controls><source src="${url}" type="video/mp4"></video>`;
 }
 
 /**
- * Extraire l'ID d'un fichier Google Drive
+ * Marquer la leçon comme terminée
  */
-function extractGoogleDriveId(url) {
-    const patterns = [
-        /\/file\/d\/([a-zA-Z0-9_-]+)/,
-        /id=([a-zA-Z0-9_-]+)/,
-        /\/open\?id=([a-zA-Z0-9_-]+)/
-    ];
-    
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
-    }
-    return null;
-}
-
-/**
- * Extraire l'ID d'une vidéo YouTube
- */
-function extractYoutubeId(url) {
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
-    ];
-    
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
-    }
-    return null;
-}
-
-/**
- * Extraire l'ID d'une vidéo Vimeo
- */
-function extractVimeoId(url) {
-    const match = url.match(/vimeo\.com\/(\d+)/);
-    return match ? match[1] : null;
-}
-
-/**
- * Marquer une leçon comme terminée
- */
-async function completeLesson() {
+async function markLessonComplete() {
     if (!currentLesson || currentLesson.completed) return;
     
     try {
         await API.markLessonComplete(currentLesson.id);
-        
         currentLesson.completed = true;
-        showToast('Leçon marquée comme terminée !', 'success');
+        currentLessons[currentLessonIndex].completed = true;
         
-        // Mettre à jour l'UI
-        renderLesson();
+        showToast('Leçon terminée !', 'success');
+        renderLessonContent();
         
         // Recharger la progression
-        const progressData = await API.getFormationProgress();
-        formationProgress = progressData;
-        renderProgressBar();
+        const progress = await API.getFormationProgress();
+        updateProgressRing(progress);
         
     } catch (error) {
-        console.error('Erreur completion leçon:', error);
-        showToast('Erreur lors de la mise à jour', 'error');
+        showToast('Erreur', 'error');
     }
 }
 
 /**
- * Fermer la leçon et retourner aux chapitres
+ * Leçon précédente
  */
-function closeLesson() {
-    currentLesson = null;
-    document.getElementById('lesson-view').style.display = 'none';
-    document.getElementById('chapters-view').style.display = 'block';
-    loadChapters(); // Recharger pour mettre à jour la progression
+function goToPrevLesson() {
+    if (currentLessonIndex > 0) {
+        openLesson(currentLessonIndex - 1);
+    }
 }
-
-// ==================== UTILITAIRES ====================
 
 /**
- * Formater une durée en minutes
+ * Leçon suivante
  */
-function formatDuration(minutes) {
-    if (minutes < 60) {
-        return `${minutes} min`;
+function goToNextLesson() {
+    if (currentLessonIndex < currentLessons.length - 1) {
+        openLesson(currentLessonIndex + 1);
     }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
+
+/**
+ * Retour à la liste des leçons
+ */
+function backToLessons() {
+    document.getElementById('lesson-view').classList.remove('active');
+    document.getElementById('lessons-view').classList.add('active');
+    renderLessons();
+}
+
+/**
+ * Retour à la liste des chapitres
+ */
+function showChapters() {
+    document.getElementById('lessons-view').classList.remove('active');
+    document.getElementById('chapters-view').classList.add('active');
+    loadChapters();
+}
+
+// Exposer globalement
+window.checkFormationAccess = checkFormationAccess;
+window.showActivateCode = showActivateCode;
+window.activateFormation = activateFormation;
+window.openPurchasePage = openPurchasePage;
+window.loadChapters = loadChapters;
+window.openChapter = openChapter;
+window.openLesson = openLesson;
+window.markLessonComplete = markLessonComplete;
+window.goToPrevLesson = goToPrevLesson;
+window.goToNextLesson = goToNextLesson;
+window.backToLessons = backToLessons;
+window.showChapters = showChapters;
+
+console.log('✅ Formation module chargé');

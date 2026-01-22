@@ -1,112 +1,78 @@
-// ================================================
-// E-CORIS - Configuration
-// ================================================
+/**
+ * E-Coris - Configuration
+ */
 
-const CONFIG = {
-    // API Backend URL - à modifier selon l'environnement
-    API_URL: 'https://e-corisfin-api.onrender.com/api',
-    
-    // Version de l'application
-    VERSION: '1.0.0',
-    
-    // Clés de stockage local
-    STORAGE_KEYS: {
-        TOKEN: 'e_coris_token',
-        USER: 'e_coris_user',
-        THEME: 'e_coris_theme'
+// Détection automatique de l'environnement
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// Configuration API
+const API_URL = isLocalhost 
+    ? 'http://localhost:3000/api' 
+    : 'https://e-corisfin-api.onrender.com/api';
+
+// Catégories avec icônes et couleurs
+const CATEGORIES = {
+    income: {
+        'salary': { label: 'Salaire', icon: '💼', color: '#4ADE80' },
+        'freelance': { label: 'Freelance', icon: '💻', color: '#2DD4BF' },
+        'investments': { label: 'Investissements', icon: '📈', color: '#00D9FF' },
+        'gifts': { label: 'Cadeaux', icon: '🎁', color: '#F472B6' },
+        'refunds': { label: 'Remboursements', icon: '↩️', color: '#A78BFA' },
+        'other_income': { label: 'Autres revenus', icon: '💰', color: '#60A5FA' }
     },
-    
-    // Catégories par défaut
-    DEFAULT_CATEGORIES: {
-        income: [
-            'Salaire',
-            'Freelance',
-            'Investissements',
-            'Cadeaux',
-            'Remboursements',
-            'Autres revenus'
-        ],
-        expense: [
-            'Alimentation',
-            'Transport',
-            'Logement',
-            'Santé',
-            'Loisirs',
-            'Shopping',
-            'Factures',
-            'Éducation',
-            'Épargne',
-            'Autres dépenses'
-        ]
-    },
-    
-    // Couleurs pour les graphiques
-    CHART_COLORS: [
-        '#00D9FF', // Cyan
-        '#7B2DFF', // Purple
-        '#2DD4BF', // Teal
-        '#FF6B6B', // Red
-        '#FF9F43', // Orange
-        '#F472B6', // Pink
-        '#4ADE80', // Green
-        '#FBBF24', // Yellow
-        '#A78BFA', // Violet
-        '#60A5FA'  // Blue
-    ],
-    
-    // Format de devise
-    CURRENCY: {
-        code: 'XOF',
-        symbol: 'FCFA',
-        locale: 'fr-FR'
-    },
-    
-    // Mois en français
-    MONTHS: [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ],
-    
-    // URL d'achat de la formation (à personnaliser)
-    PURCHASE_URL: 'https://votre-site.com/formation'
+    expense: {
+        'food': { label: 'Alimentation', icon: '🛒', color: '#FF6B6B' },
+        'transport': { label: 'Transport', icon: '🚗', color: '#FF9F43' },
+        'housing': { label: 'Logement', icon: '🏠', color: '#FBBF24' },
+        'health': { label: 'Santé', icon: '❤️', color: '#F472B6' },
+        'leisure': { label: 'Loisirs', icon: '🎬', color: '#A78BFA' },
+        'shopping': { label: 'Shopping', icon: '🛍️', color: '#7B2DFF' },
+        'bills': { label: 'Factures', icon: '📄', color: '#60A5FA' },
+        'education': { label: 'Éducation', icon: '📚', color: '#2DD4BF' },
+        'savings': { label: 'Épargne', icon: '🐷', color: '#4ADE80' },
+        'other_expense': { label: 'Autres dépenses', icon: '📦', color: '#888' }
+    }
 };
 
-// Fonction utilitaire pour formater les montants
+// Mois en français
+const MONTHS = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+];
+
+/**
+ * Formater un montant en FCFA
+ */
 function formatAmount(amount) {
-    return new Intl.NumberFormat(CONFIG.CURRENCY.locale, {
-        style: 'decimal',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(amount) + ' ' + CONFIG.CURRENCY.symbol;
+    return new Intl.NumberFormat('fr-FR').format(Math.round(amount)) + ' FCFA';
 }
 
-// Fonction utilitaire pour formater les dates
-function formatDate(dateString, options = {}) {
-    const date = new Date(dateString);
-    const defaultOptions = {
-        day: '2-digit',
+/**
+ * Formater une date
+ */
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', {
+        day: 'numeric',
         month: 'short',
         year: 'numeric'
-    };
-    return date.toLocaleDateString('fr-FR', { ...defaultOptions, ...options });
-}
-
-// Fonction utilitaire pour formater les dates courtes
-function formatShortDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit'
     });
 }
 
-// Fonction pour obtenir la date au format ISO (YYYY-MM-DD)
-function toISODateString(date) {
-    return date.toISOString().split('T')[0];
+/**
+ * Obtenir les infos d'une catégorie
+ */
+function getCategoryInfo(category, type) {
+    const cats = type === 'income' ? CATEGORIES.income : CATEGORIES.expense;
+    return cats[category] || { label: category || 'Autre', icon: '📦', color: '#888' };
 }
 
-// Détection du mode développement
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    CONFIG.API_URL = 'http://localhost:3000/api';
-    console.log('🔧 Mode développement - API:', CONFIG.API_URL);
-}
+// Exposer globalement
+window.API_URL = API_URL;
+window.CATEGORIES = CATEGORIES;
+window.MONTHS = MONTHS;
+window.formatAmount = formatAmount;
+window.formatDate = formatDate;
+window.getCategoryInfo = getCategoryInfo;
+
+console.log('✅ Config chargé - API:', API_URL);

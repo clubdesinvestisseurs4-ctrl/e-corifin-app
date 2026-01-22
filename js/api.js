@@ -1,50 +1,43 @@
-// ================================================
-// E-CORIS - API Service
-// ================================================
+/**
+ * E-Coris - API Service
+ */
 
 const API = {
-    // Token d'authentification
-    getToken() {
-        return localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+    // Token management
+    getToken: function() {
+        return localStorage.getItem('ecoris_token');
     },
     
-    setToken(token) {
-        localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
+    setToken: function(token) {
+        localStorage.setItem('ecoris_token', token);
     },
     
-    clearToken() {
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
+    removeToken: function() {
+        localStorage.removeItem('ecoris_token');
     },
     
-    // Headers par défaut
-    getHeaders(includeAuth = true) {
+    // Generic request
+    request: async function(endpoint, options = {}) {
+        const token = this.getToken();
         const headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...options.headers
         };
         
-        if (includeAuth) {
-            const token = this.getToken();
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
         }
         
-        return headers;
-    },
-    
-    // Requête générique
-    async request(endpoint, options = {}) {
-        const url = `${CONFIG.API_URL}${endpoint}`;
-        const defaultOptions = {
-            headers: this.getHeaders(options.auth !== false)
-        };
-        
         try {
-            const response = await fetch(url, { ...defaultOptions, ...options });
+            const response = await fetch(API_URL + endpoint, {
+                ...options,
+                headers
+            });
+            
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.error || 'Une erreur est survenue');
+                throw new Error(data.error || 'Erreur serveur');
             }
             
             return data;
@@ -54,167 +47,161 @@ const API = {
         }
     },
     
-    // GET
-    async get(endpoint, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const url = queryString ? `${endpoint}?${queryString}` : endpoint;
-        return this.request(url, { method: 'GET' });
-    },
-    
-    // POST
-    async post(endpoint, body = {}, auth = true) {
-        return this.request(endpoint, {
+    // Auth
+    login: async function(email, password) {
+        const data = await this.request('/auth/login', {
             method: 'POST',
-            body: JSON.stringify(body),
-            auth
+            body: JSON.stringify({ email, password })
         });
-    },
-    
-    // PUT
-    async put(endpoint, body = {}) {
-        return this.request(endpoint, {
-            method: 'PUT',
-            body: JSON.stringify(body)
-        });
-    },
-    
-    // DELETE
-    async delete(endpoint) {
-        return this.request(endpoint, { method: 'DELETE' });
-    },
-    
-    // ============================================
-    // AUTH
-    // ============================================
-    
-    async login(email, password) {
-        const response = await this.post('/auth/login', { email, password }, false);
-        if (response.token) {
-            this.setToken(response.token);
-            localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(response.user));
+        if (data.token) {
+            this.setToken(data.token);
         }
-        return response;
+        return data;
     },
     
-    async register(fullName, email, password, purchaseCode = null) {
-        const endpoint = purchaseCode ? '/auth/register-formation' : '/auth/register';
+    register: async function(fullName, email, password, purchaseCode) {
         const body = { fullName, email, password };
         if (purchaseCode) body.purchaseCode = purchaseCode;
         
-        const response = await this.post(endpoint, body, false);
-        if (response.token) {
-            this.setToken(response.token);
-            localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(response.user));
+        const data = await this.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+        if (data.token) {
+            this.setToken(data.token);
         }
-        return response;
+        return data;
     },
     
-    async getProfile() {
-        return this.get('/auth/me');
+    getCurrentUser: async function() {
+        return await this.request('/auth/me');
     },
     
-    logout() {
-        this.clearToken();
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
+    activateCode: async function(code) {
+        return await this.request('/auth/activate', {
+            method: 'POST',
+            body: JSON.stringify({ code })
+        });
     },
     
-    // ============================================
-    // TRANSACTIONS
-    // ============================================
-    
-    async getTransactions(params = {}) {
-        return this.get('/transactions', params);
+    // Transactions
+    getTransactions: async function(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.type && filters.type !== 'all') params.append('type', filters.type);
+        if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
+        
+        return await this.request('/transactions?' + params.toString());
     },
     
-    async createTransaction(data) {
-        return this.post('/transactions', data);
+    createTransaction: async function(data) {
+        return await this.request('/transactions', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     },
     
-    async updateTransaction(id, data) {
-        return this.put(`/transactions/${id}`, data);
+    updateTransaction: async function(id, data) {
+        return await this.request('/transactions/' + id, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
     },
     
-    async deleteTransaction(id) {
-        return this.delete(`/transactions/${id}`);
+    deleteTransaction: async function(id) {
+        return await this.request('/transactions/' + id, {
+            method: 'DELETE'
+        });
     },
     
-    async getCategories() {
-        return this.get('/transactions/categories');
+    // Budgets
+    getBudgets: async function(month, year) {
+        const params = new URLSearchParams();
+        if (month) params.append('month', month);
+        if (year) params.append('year', year);
+        return await this.request('/budgets?' + params.toString());
     },
     
-    // ============================================
-    // BUDGETS
-    // ============================================
-    
-    async getBudgets(params = {}) {
-        return this.get('/budgets', params);
+    getBudgetTracking: async function(month, year) {
+        return await this.request('/budgets/tracking?month=' + month + '&year=' + year);
     },
     
-    async createBudget(data) {
-        return this.post('/budgets', data);
+    createBudget: async function(data) {
+        return await this.request('/budgets', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     },
     
-    async updateBudget(id, data) {
-        return this.put(`/budgets/${id}`, data);
+    updateBudget: async function(id, data) {
+        return await this.request('/budgets/' + id, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
     },
     
-    async deleteBudget(id) {
-        return this.delete(`/budgets/${id}`);
+    deleteBudget: async function(id) {
+        return await this.request('/budgets/' + id, {
+            method: 'DELETE'
+        });
     },
     
-    async getBudgetTracking(month, year) {
-        return this.get('/budgets/tracking', { month, year });
+    // Dashboard
+    getDashboardSummary: async function(month, year) {
+        return await this.request('/dashboard/summary?month=' + month + '&year=' + year);
     },
     
-    // ============================================
-    // DASHBOARD
-    // ============================================
-    
-    async getDashboardSummary(month, year) {
-        return this.get('/dashboard/summary', { month, year });
+    getDashboardTrend: async function(months) {
+        return await this.request('/dashboard/trend?months=' + (months || 6));
     },
     
-    async getDashboardTrend(months = 6) {
-        return this.get('/dashboard/trend', { months });
+    getDashboardAlerts: async function() {
+        return await this.request('/dashboard/alerts');
     },
     
-    async getRecentTransactions(limit = 5) {
-        return this.get('/dashboard/recent', { limit });
+    getDashboardRecent: async function(limit) {
+        return await this.request('/dashboard/recent?limit=' + (limit || 5));
     },
     
-    async getDashboardAlerts() {
-        return this.get('/dashboard/alerts');
+    getDashboardStats: async function() {
+        return await this.request('/dashboard/stats');
     },
     
-    async getDashboardStats() {
-        return this.get('/dashboard/stats');
+    // Formation
+    getFormationStatus: async function() {
+        return await this.request('/courses/access-status');
     },
     
-    // ============================================
-    // FORMATION
-    // ============================================
-    
-    async getFormationAccessStatus() {
-        return this.get('/courses/access-status');
+    getChapters: async function() {
+        return await this.request('/courses/chapters');
     },
     
-    async getChapters() {
-        return this.get('/courses/chapters');
+    getLessons: async function(chapterId) {
+        return await this.request('/courses/chapters/' + chapterId + '/lessons');
     },
     
-    async getLessons(chapterId) {
-        return this.get(`/courses/chapters/${chapterId}/lessons`);
+    getLesson: async function(lessonId) {
+        return await this.request('/courses/lessons/' + lessonId);
     },
     
-    async getLesson(lessonId) {
-        return this.get(`/courses/lessons/${lessonId}`);
+    markLessonComplete: async function(lessonId) {
+        return await this.request('/courses/lessons/' + lessonId + '/complete', {
+            method: 'POST'
+        });
     },
     
-    async markLessonComplete(lessonId) {
-        return this.post(`/courses/lessons/${lessonId}/complete`);
-    },
-    
-    async getFormationProgress() {
-        return this.get('/courses/progress');
+    getFormationProgress: async function() {
+        const data = await this.request('/courses/progress');
+        return {
+            completed: data.completedLessons || 0,
+            total: data.totalLessons || 0,
+            percentage: data.progress || 0
+        };
     }
 };
+
+// Exposer globalement
+window.API = API;
+
+console.log('✅ API Service chargé');

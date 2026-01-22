@@ -1,194 +1,153 @@
-// ================================================
-// E-CORIS - Authentication Module
-// ================================================
+/**
+ * E-Coris - Authentification
+ */
 
-// État de l'utilisateur
+// État utilisateur
 let currentUser = null;
 
-// Vérifier si l'utilisateur est connecté
-function isAuthenticated() {
-    return !!API.getToken();
-}
-
-// Récupérer l'utilisateur courant
-function getCurrentUser() {
-    if (currentUser) return currentUser;
-    const stored = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
-    if (stored) {
-        currentUser = JSON.parse(stored);
-        return currentUser;
+/**
+ * Vérifier si l'utilisateur est authentifié
+ */
+async function checkAuth() {
+    const token = API.getToken();
+    if (!token) {
+        return false;
     }
-    return null;
+    
+    try {
+        const data = await API.getCurrentUser();
+        currentUser = data.user;
+        return true;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        API.removeToken();
+        return false;
+    }
 }
 
-// Mettre à jour l'utilisateur courant
-function setCurrentUser(user) {
-    currentUser = user;
-    localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(user));
-}
-
-// Afficher le formulaire de connexion
-function showLogin() {
-    document.getElementById('login-form').classList.remove('hidden');
-    document.getElementById('register-form').classList.add('hidden');
-}
-
-// Afficher le formulaire d'inscription
-function showRegister() {
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('register-form').classList.remove('hidden');
-}
-
-// Toggle visibilité mot de passe
-function togglePassword(inputId) {
-    const input = document.getElementById(inputId);
-    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-    input.setAttribute('type', type);
-}
-
-// Gérer la connexion
+/**
+ * Connexion
+ */
 async function handleLogin(event) {
     event.preventDefault();
     
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     
-    const submitBtn = event.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Connexion...</span>';
-    
     try {
-        const response = await API.login(email, password);
-        setCurrentUser(response.user);
+        const data = await API.login(email, password);
+        currentUser = data.user;
         showToast('Connexion réussie !', 'success');
-        initializeApp();
+        showMainApp();
+        loadInitialData();
     } catch (error) {
-        showToast(error.message, 'error');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `
-            <span>Se connecter</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-        `;
+        showToast(error.message || 'Erreur de connexion', 'error');
     }
     
     return false;
 }
 
-// Gérer l'inscription
+/**
+ * Inscription
+ */
 async function handleRegister(event) {
     event.preventDefault();
     
     const fullName = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
-    const purchaseCode = document.getElementById('purchase-code').value || null;
-    
-    const submitBtn = event.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Création...</span>';
+    const purchaseCode = document.getElementById('purchase-code').value;
     
     try {
-        const response = await API.register(fullName, email, password, purchaseCode);
-        setCurrentUser(response.user);
+        const data = await API.register(fullName, email, password, purchaseCode || null);
+        currentUser = data.user;
         showToast('Compte créé avec succès !', 'success');
-        initializeApp();
+        showMainApp();
+        loadInitialData();
     } catch (error) {
-        showToast(error.message, 'error');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `
-            <span>Créer mon compte</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-        `;
+        showToast(error.message || 'Erreur lors de l\'inscription', 'error');
     }
     
     return false;
 }
 
-// Déconnexion
+/**
+ * Déconnexion
+ */
 function logout() {
-    API.logout();
+    API.removeToken();
     currentUser = null;
     closeModal();
     showAuthSection();
     showToast('Déconnexion réussie', 'success');
 }
 
-// Afficher la section authentification
-function showAuthSection() {
-    document.getElementById('auth-section').classList.remove('hidden');
-    document.getElementById('main-app').classList.add('hidden');
-    showLogin();
+/**
+ * Afficher le formulaire de connexion
+ */
+function showLogin() {
+    document.getElementById('login-form').classList.remove('hidden');
+    document.getElementById('register-form').classList.add('hidden');
 }
 
-// Afficher l'application principale
-function showMainApp() {
-    document.getElementById('auth-section').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
+/**
+ * Afficher le formulaire d'inscription
+ */
+function showRegister() {
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('register-form').classList.remove('hidden');
 }
 
-// Afficher le profil
-async function showProfile() {
-    const user = getCurrentUser();
-    if (!user) return;
+/**
+ * Afficher/masquer le mot de passe
+ */
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+}
+
+/**
+ * Afficher le profil
+ */
+function showProfile() {
+    if (!currentUser) return;
     
-    document.getElementById('profile-name').textContent = user.fullName;
-    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-name').textContent = currentUser.fullName || 'Utilisateur';
+    document.getElementById('profile-email').textContent = currentUser.email || '';
     
     const badge = document.getElementById('profile-badge');
-    if (user.hasFormationAccess) {
-        badge.textContent = 'Formation Premium';
-        badge.classList.add('premium');
+    if (currentUser.hasFormationAccess) {
+        badge.textContent = 'Compte Premium';
+        badge.className = 'badge badge-premium';
     } else {
         badge.textContent = 'Compte gratuit';
-        badge.classList.remove('premium');
-    }
-    
-    // Charger les statistiques
-    try {
-        const { stats } = await API.getDashboardStats();
-        document.getElementById('profile-stats').innerHTML = `
-            <div class="stat-item">
-                <div class="stat-value">${stats.transactionCount}</div>
-                <div class="stat-label">Transactions</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.monthsTracked}</div>
-                <div class="stat-label">Mois suivis</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${formatAmount(stats.totalSavings)}</div>
-                <div class="stat-label">Épargne totale</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.savingsRate}%</div>
-                <div class="stat-label">Taux d'épargne</div>
-            </div>
-        `;
-    } catch (error) {
-        document.getElementById('profile-stats').innerHTML = '<p class="text-muted">Statistiques non disponibles</p>';
+        badge.className = 'badge';
     }
     
     openModal('profile-modal');
 }
 
-// Vérifier le token au démarrage
-async function checkAuth() {
-    if (!isAuthenticated()) {
-        return false;
-    }
-    
-    try {
-        const response = await API.getProfile();
-        setCurrentUser(response.user);
-        return true;
-    } catch (error) {
-        API.logout();
-        return false;
-    }
+/**
+ * Obtenir l'utilisateur courant
+ */
+function getCurrentUser() {
+    return currentUser;
 }
+
+// Exposer globalement
+window.currentUser = currentUser;
+window.checkAuth = checkAuth;
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.logout = logout;
+window.showLogin = showLogin;
+window.showRegister = showRegister;
+window.togglePassword = togglePassword;
+window.showProfile = showProfile;
+window.getCurrentUser = getCurrentUser;
+
+console.log('✅ Auth module chargé');
