@@ -456,13 +456,102 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.budget-card:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+}
+
+.budget-card.over {
+    border-color: var(--accent-red);
 }
 
 .budget-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: var(--space-sm);
     margin-bottom: var(--space-md);
+}
+
+.budget-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-size: 1.25rem;
+}
+
+.budget-name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.budget-edit-icon {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    font-size: 0.875rem;
+}
+
+.budget-card:hover .budget-edit-icon {
+    opacity: 1;
+}
+
+.budget-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.budget-progress .progress-bar {
+    flex: 1;
+}
+
+.progress-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+}
+
+.progress-text.over {
+    color: var(--accent-red);
+}
+
+.budget-amounts {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-sm);
+}
+
+.budget-amounts .spent {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.budget-amounts .separator {
+    color: var(--text-secondary);
+}
+
+.budget-amounts .total {
+    color: var(--text-secondary);
+}
+
+.budget-remaining {
+    font-size: 0.75rem;
+    color: var(--accent-green);
+}
+
+.budget-remaining.over {
+    color: var(--accent-red);
 }
 
 .budget-category {
@@ -505,6 +594,11 @@
     height: 100%;
     border-radius: var(--radius-full);
     transition: width var(--transition-slow);
+    background: var(--gradient-primary);
+}
+
+.progress-fill.over {
+    background: var(--gradient-danger);
 }
 
 .progress-fill.ok {

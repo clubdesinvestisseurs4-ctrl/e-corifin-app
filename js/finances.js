@@ -1,5 +1,6 @@
 /**
  * E-Coris - Module Finances
+ * Version corrigée - Gestion complète des budgets, graphiques et synchronisation
  */
 
 // État local
@@ -9,6 +10,51 @@ let dashboardData = null;
 let currentFilters = { type: '', category: '' };
 let expenseChart = null;
 
+// Période courante (partagée entre dashboard et budgets)
+let currentMonth = new Date().getMonth() + 1;
+let currentYear = new Date().getFullYear();
+
+// ==================== INITIALISATION ====================
+
+/**
+ * Initialiser les sélecteurs de période du dashboard
+ */
+function initDashboardPeriodSelectors() {
+    const monthSelect = document.getElementById('period-month');
+    const yearSelect = document.getElementById('period-year');
+    
+    if (!monthSelect || !yearSelect) return;
+    
+    const now = new Date();
+    
+    // Mois
+    monthSelect.innerHTML = MONTHS.map((m, i) => 
+        `<option value="${i + 1}" ${i + 1 === currentMonth ? 'selected' : ''}>${m}</option>`
+    ).join('');
+    
+    // Années (3 ans: année précédente, actuelle, suivante)
+    const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+    yearSelect.innerHTML = years.map(y => 
+        `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
+    ).join('');
+}
+
+/**
+ * Changement de période depuis le dashboard
+ */
+function onPeriodChange() {
+    const monthSelect = document.getElementById('period-month');
+    const yearSelect = document.getElementById('period-year');
+    
+    if (monthSelect && yearSelect) {
+        currentMonth = parseInt(monthSelect.value);
+        currentYear = parseInt(yearSelect.value);
+    }
+    
+    // Recharger le dashboard avec la nouvelle période
+    loadDashboard();
+}
+
 // ==================== DASHBOARD ====================
 
 /**
@@ -16,15 +62,10 @@ let expenseChart = null;
  */
 async function loadDashboard() {
     try {
-        const now = new Date();
-        const monthSelect = document.getElementById('period-month');
-        const yearSelect = document.getElementById('period-year');
-        
-        const month = monthSelect ? parseInt(monthSelect.value) : now.getMonth() + 1;
-        const year = yearSelect ? parseInt(yearSelect.value) : now.getFullYear();
+        console.log(`📊 Chargement dashboard: ${currentMonth}/${currentYear}`);
         
         const [summary, trend, alerts, recent] = await Promise.all([
-            API.getDashboardSummary(month, year),
+            API.getDashboardSummary(currentMonth, currentYear),
             API.getDashboardTrend(6),
             API.getDashboardAlerts(),
             API.getDashboardRecent(5)
@@ -35,6 +76,7 @@ async function loadDashboard() {
         
     } catch (error) {
         console.error('Erreur chargement dashboard:', error);
+        showToast('Erreur de chargement', 'error');
     }
 }
 
@@ -65,7 +107,9 @@ function renderDashboard() {
     }
     
     // Montants
-    const balance = (summary.totalIncome || 0) - (summary.totalExpense || 0);
+    const totalIncome = summary.totalIncome || 0;
+    const totalExpense = summary.totalExpense || 0;
+    const balance = totalIncome - totalExpense;
     
     const balanceEl = document.getElementById('monthly-balance');
     if (balanceEl) {
@@ -75,16 +119,17 @@ function renderDashboard() {
     
     const incomeEl = document.getElementById('monthly-income');
     if (incomeEl) {
-        incomeEl.textContent = formatAmount(summary.totalIncome || 0);
+        incomeEl.textContent = formatAmount(totalIncome);
     }
     
     const expenseEl = document.getElementById('monthly-expense');
     if (expenseEl) {
-        expenseEl.textContent = formatAmount(summary.totalExpense || 0);
+        expenseEl.textContent = formatAmount(totalExpense);
     }
     
     // Graphique des dépenses
-    renderExpenseChart(summary.breakdown ? summary.breakdown.expensesByCategory : {});
+    const expensesByCategory = summary.breakdown ? summary.breakdown.expensesByCategory : {};
+    renderExpenseChart(expensesByCategory);
     
     // Alertes
     renderAlerts(alerts.alerts || []);
@@ -97,14 +142,25 @@ function renderDashboard() {
  * Graphique des dépenses par catégorie
  */
 function renderExpenseChart(expensesByCategory) {
-    const canvas = document.getElementById('expense-chart');
+    const chartContainer = document.querySelector('.chart-container');
     const legendEl = document.getElementById('expense-legend');
-    if (!canvas) return;
     
-    const categories = Object.keys(expensesByCategory);
+    if (!chartContainer) return;
+    
+    // Détruire l'ancien graphique s'il existe
+    if (expenseChart) {
+        expenseChart.destroy();
+        expenseChart = null;
+    }
+    
+    const categories = Object.keys(expensesByCategory || {});
+    
+    // Recréer le canvas
+    chartContainer.innerHTML = '<canvas id="expense-chart"></canvas>';
+    const canvas = document.getElementById('expense-chart');
     
     if (categories.length === 0) {
-        canvas.parentElement.innerHTML = '<p class="empty-chart">Aucune dépense ce mois</p>';
+        chartContainer.innerHTML = '<p class="empty-chart">Aucune dépense ce mois</p>';
         if (legendEl) legendEl.innerHTML = '';
         return;
     }
@@ -121,10 +177,6 @@ function renderExpenseChart(expensesByCategory) {
     });
     
     const ctx = canvas.getContext('2d');
-    
-    if (expenseChart) {
-        expenseChart.destroy();
-    }
     
     expenseChart = new Chart(ctx, {
         type: 'doughnut',
@@ -265,7 +317,7 @@ function renderAllTransactions() {
         }
         
         html += `<div class="transaction-group">
-            <div class="transaction-date">${dateLabel}</div>`;
+            <div class="transaction-date-header">${dateLabel}</div>`;
         
         grouped[date].forEach(t => {
             const info = getCategoryInfo(t.category, t.type);
@@ -294,7 +346,6 @@ function renderAllTransactions() {
  * Afficher le formulaire d'ajout de transaction
  */
 function showAddTransaction(type) {
-    const modal = document.getElementById('transaction-modal');
     const title = document.getElementById('transaction-modal-title');
     const typeHidden = document.getElementById('transaction-type-hidden');
     const categorySelect = document.getElementById('transaction-category');
@@ -321,8 +372,18 @@ function showAddTransaction(type) {
  * Éditer une transaction
  */
 function editTransaction(id) {
-    const transaction = transactions.find(t => t.id === id);
-    if (!transaction) return;
+    // Chercher dans les transactions chargées
+    let transaction = transactions.find(t => t.id === id);
+    
+    // Sinon chercher dans les transactions récentes du dashboard
+    if (!transaction && dashboardData && dashboardData.recent && dashboardData.recent.transactions) {
+        transaction = dashboardData.recent.transactions.find(t => t.id === id);
+    }
+    
+    if (!transaction) {
+        showToast('Transaction non trouvée', 'error');
+        return;
+    }
     
     const title = document.getElementById('transaction-modal-title');
     const typeHidden = document.getElementById('transaction-type-hidden');
@@ -400,16 +461,30 @@ function filterTransactions() {
 // ==================== BUDGETS ====================
 
 /**
- * Charger les budgets
+ * Charger les budgets du mois/année courant
  */
 async function loadBudgets() {
     try {
-        const now = new Date();
-        const data = await API.getBudgetTracking(now.getMonth() + 1, now.getFullYear());
+        // Mettre à jour depuis les sélecteurs de la vue budgets
+        const budgetMonthSelect = document.getElementById('budget-period-month');
+        const budgetYearSelect = document.getElementById('budget-period-year');
+        
+        if (budgetMonthSelect && budgetYearSelect) {
+            currentMonth = parseInt(budgetMonthSelect.value);
+            currentYear = parseInt(budgetYearSelect.value);
+        }
+        
+        console.log(`📋 Chargement budgets: ${currentMonth}/${currentYear}`);
+        
+        const data = await API.getBudgetTracking(currentMonth, currentYear);
         budgets = data.budgets || [];
+        
+        console.log('Budgets reçus:', budgets);
+        
         renderBudgets();
     } catch (error) {
         console.error('Erreur chargement budgets:', error);
+        showToast('Erreur de chargement des budgets', 'error');
     }
 }
 
@@ -420,10 +495,15 @@ function renderBudgets() {
     const container = document.getElementById('budgets-tracking');
     if (!container) return;
     
-    if (budgets.length === 0) {
+    // Créer les sélecteurs de période s'ils n'existent pas
+    ensureBudgetPeriodSelectors();
+    
+    const monthName = MONTHS[currentMonth - 1] || '';
+    
+    if (!budgets || budgets.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Aucun budget défini</p>
+                <p>Aucun budget défini pour ${monthName} ${currentYear}</p>
                 <button class="btn btn-primary" onclick="showAddBudget()">Créer un budget</button>
             </div>
         `;
@@ -432,27 +512,40 @@ function renderBudgets() {
     
     container.innerHTML = budgets.map(budget => {
         const info = getCategoryInfo(budget.category, 'expense');
+        const budgetAmount = budget.amount || 0;
         const spent = budget.spent || 0;
-        const percentage = Math.min(Math.round((spent / budget.amount) * 100), 100);
-        const remaining = budget.amount - spent;
-        const isOver = spent > budget.amount;
+        
+        // Calcul du pourcentage (peut dépasser 100%)
+        const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+        const displayWidth = Math.min(percentage, 100); // Barre max 100%
+        const remaining = budgetAmount - spent;
+        const isOver = spent > budgetAmount;
+        
+        // Déterminer la classe de couleur
+        let progressClass = '';
+        if (isOver) {
+            progressClass = 'over';
+        } else if (percentage >= 80) {
+            progressClass = 'warning';
+        }
         
         return `
-            <div class="budget-card ${isOver ? 'over' : ''}">
+            <div class="budget-card ${isOver ? 'over' : ''}" onclick="editBudget('${budget.id}')">
                 <div class="budget-header">
                     <span class="budget-icon" style="background: ${info.color}20; color: ${info.color}">${info.icon}</span>
                     <span class="budget-name">${info.label}</span>
+                    <span class="budget-edit-icon">✏️</span>
                 </div>
                 <div class="budget-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill ${isOver ? 'over' : ''}" style="width: ${percentage}%"></div>
+                        <div class="progress-fill ${progressClass}" style="width: ${displayWidth}%"></div>
                     </div>
-                    <div class="progress-text">${percentage}%</div>
+                    <div class="progress-text ${isOver ? 'over' : ''}">${percentage}%</div>
                 </div>
                 <div class="budget-amounts">
                     <span class="spent">${formatAmount(spent)}</span>
                     <span class="separator">/</span>
-                    <span class="total">${formatAmount(budget.amount)}</span>
+                    <span class="total">${formatAmount(budgetAmount)}</span>
                 </div>
                 <div class="budget-remaining ${remaining < 0 ? 'over' : ''}">
                     ${remaining >= 0 ? 'Reste' : 'Dépassement'}: ${formatAmount(Math.abs(remaining))}
@@ -463,40 +556,157 @@ function renderBudgets() {
 }
 
 /**
+ * S'assurer que les sélecteurs de période des budgets existent
+ */
+function ensureBudgetPeriodSelectors() {
+    let periodSelector = document.getElementById('budget-period-selector');
+    
+    if (!periodSelector) {
+        const header = document.querySelector('#budgets-view .view-header');
+        if (header) {
+            // Insérer après le titre
+            const h2 = header.querySelector('h2');
+            periodSelector = document.createElement('div');
+            periodSelector.id = 'budget-period-selector';
+            periodSelector.className = 'period-selector';
+            periodSelector.innerHTML = `
+                <select id="budget-period-month" onchange="loadBudgets()"></select>
+                <select id="budget-period-year" onchange="loadBudgets()"></select>
+            `;
+            
+            // Insérer avant le bouton d'ajout
+            const addBtn = header.querySelector('.btn-icon');
+            if (addBtn) {
+                header.insertBefore(periodSelector, addBtn);
+            } else {
+                header.appendChild(periodSelector);
+            }
+        }
+    }
+    
+    // Initialiser les options
+    const monthSelect = document.getElementById('budget-period-month');
+    const yearSelect = document.getElementById('budget-period-year');
+    
+    if (monthSelect && yearSelect) {
+        const now = new Date();
+        
+        // Mois
+        if (monthSelect.options.length === 0) {
+            monthSelect.innerHTML = MONTHS.map((m, i) => 
+                `<option value="${i + 1}">${m}</option>`
+            ).join('');
+        }
+        monthSelect.value = currentMonth;
+        
+        // Années
+        if (yearSelect.options.length === 0) {
+            const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+            yearSelect.innerHTML = years.map(y => 
+                `<option value="${y}">${y}</option>`
+            ).join('');
+        }
+        yearSelect.value = currentYear;
+    }
+}
+
+/**
  * Afficher le formulaire d'ajout de budget
  */
 function showAddBudget() {
+    const modalTitle = document.querySelector('#budget-modal .modal-header h3');
     const categorySelect = document.getElementById('budget-category');
     const monthSelect = document.getElementById('budget-month');
     const yearSelect = document.getElementById('budget-year');
+    const budgetIdField = document.getElementById('budget-id');
+    const deleteBtn = document.getElementById('delete-budget-btn');
     
     // Reset
     document.getElementById('budget-form').reset();
+    if (budgetIdField) budgetIdField.value = '';
+    if (modalTitle) modalTitle.textContent = 'Nouveau budget';
+    if (deleteBtn) deleteBtn.style.display = 'none';
     
     // Catégories de dépenses
     categorySelect.innerHTML = Object.entries(CATEGORIES.expense).map(([key, val]) => 
         `<option value="${key}">${val.icon} ${val.label}</option>`
     ).join('');
     
-    // Mois
+    // Utiliser le mois/année courant
     const now = new Date();
     monthSelect.innerHTML = MONTHS.map((m, i) => 
-        `<option value="${i + 1}" ${i === now.getMonth() ? 'selected' : ''}>${m}</option>`
+        `<option value="${i + 1}" ${i + 1 === currentMonth ? 'selected' : ''}>${m}</option>`
     ).join('');
     
     // Années
-    yearSelect.innerHTML = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => 
-        `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`
+    const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+    yearSelect.innerHTML = years.map(y => 
+        `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
     ).join('');
     
     openModal('budget-modal');
 }
 
 /**
- * Sauvegarder un budget
+ * Éditer un budget existant
+ */
+function editBudget(budgetId) {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget) {
+        showToast('Budget non trouvé', 'error');
+        return;
+    }
+    
+    const modalTitle = document.querySelector('#budget-modal .modal-header h3');
+    const categorySelect = document.getElementById('budget-category');
+    const monthSelect = document.getElementById('budget-month');
+    const yearSelect = document.getElementById('budget-year');
+    const budgetIdField = document.getElementById('budget-id');
+    const deleteBtn = document.getElementById('delete-budget-btn');
+    const amountField = document.getElementById('budget-amount');
+    
+    // Titre
+    if (modalTitle) modalTitle.textContent = 'Modifier le budget';
+    
+    // ID
+    if (budgetIdField) budgetIdField.value = budgetId;
+    
+    // Montant
+    if (amountField) amountField.value = budget.amount;
+    
+    // Catégories - sélectionner la catégorie actuelle
+    categorySelect.innerHTML = Object.entries(CATEGORIES.expense).map(([key, val]) => 
+        `<option value="${key}" ${key === budget.category ? 'selected' : ''}>${val.icon} ${val.label}</option>`
+    ).join('');
+    
+    // Mois
+    const now = new Date();
+    monthSelect.innerHTML = MONTHS.map((m, i) => 
+        `<option value="${i + 1}" ${i + 1 === currentMonth ? 'selected' : ''}>${m}</option>`
+    ).join('');
+    
+    // Années
+    const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+    yearSelect.innerHTML = years.map(y => 
+        `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
+    ).join('');
+    
+    // Afficher le bouton supprimer
+    if (deleteBtn) {
+        deleteBtn.style.display = 'block';
+    }
+    
+    openModal('budget-modal');
+}
+
+/**
+ * Sauvegarder un budget (création ou modification)
  */
 async function saveBudget(event) {
     event.preventDefault();
+    
+    const budgetIdField = document.getElementById('budget-id');
+    const budgetId = budgetIdField ? budgetIdField.value : '';
     
     const data = {
         category: document.getElementById('budget-category').value,
@@ -506,9 +716,29 @@ async function saveBudget(event) {
     };
     
     try {
-        await API.createBudget(data);
-        showToast('Budget créé', 'success');
+        if (budgetId) {
+            // Modification
+            await API.updateBudget(budgetId, data);
+            showToast('Budget modifié', 'success');
+        } else {
+            // Création
+            await API.createBudget(data);
+            showToast('Budget créé', 'success');
+        }
+        
         closeModal();
+        
+        // Mettre à jour la période courante
+        currentMonth = data.month;
+        currentYear = data.year;
+        
+        // Synchroniser les sélecteurs du dashboard
+        const dashboardMonthSelect = document.getElementById('period-month');
+        const dashboardYearSelect = document.getElementById('period-year');
+        if (dashboardMonthSelect) dashboardMonthSelect.value = currentMonth;
+        if (dashboardYearSelect) dashboardYearSelect.value = currentYear;
+        
+        // Recharger les données
         loadBudgets();
         loadDashboard();
     } catch (error) {
@@ -516,6 +746,31 @@ async function saveBudget(event) {
     }
     
     return false;
+}
+
+/**
+ * Supprimer un budget
+ */
+async function deleteBudget() {
+    const budgetIdField = document.getElementById('budget-id');
+    const budgetId = budgetIdField ? budgetIdField.value : '';
+    
+    if (!budgetId) {
+        showToast('Aucun budget sélectionné', 'error');
+        return;
+    }
+    
+    if (!confirm('Supprimer ce budget ?')) return;
+    
+    try {
+        await API.deleteBudget(budgetId);
+        showToast('Budget supprimé', 'success');
+        closeModal();
+        loadBudgets();
+        loadDashboard();
+    } catch (error) {
+        showToast(error.message || 'Erreur', 'error');
+    }
 }
 
 // ==================== NAVIGATION ====================
@@ -527,6 +782,13 @@ function showDashboard() {
     document.getElementById('dashboard-view').classList.add('active');
     document.getElementById('transactions-view').classList.remove('active');
     document.getElementById('budgets-view').classList.remove('active');
+    
+    // Synchroniser les sélecteurs du dashboard
+    const monthSelect = document.getElementById('period-month');
+    const yearSelect = document.getElementById('period-year');
+    if (monthSelect) monthSelect.value = currentMonth;
+    if (yearSelect) yearSelect.value = currentYear;
+    
     loadDashboard();
 }
 
@@ -547,10 +809,14 @@ function showBudgets() {
     document.getElementById('dashboard-view').classList.remove('active');
     document.getElementById('transactions-view').classList.remove('active');
     document.getElementById('budgets-view').classList.add('active');
+    
     loadBudgets();
 }
 
-// Exposer globalement
+// ==================== EXPORTS GLOBAUX ====================
+
+window.initDashboardPeriodSelectors = initDashboardPeriodSelectors;
+window.onPeriodChange = onPeriodChange;
 window.loadDashboard = loadDashboard;
 window.loadTransactions = loadTransactions;
 window.loadBudgets = loadBudgets;
@@ -560,7 +826,9 @@ window.saveTransaction = saveTransaction;
 window.showTransactionFilters = showTransactionFilters;
 window.filterTransactions = filterTransactions;
 window.showAddBudget = showAddBudget;
+window.editBudget = editBudget;
 window.saveBudget = saveBudget;
+window.deleteBudget = deleteBudget;
 window.showDashboard = showDashboard;
 window.showTransactions = showTransactions;
 window.showBudgets = showBudgets;

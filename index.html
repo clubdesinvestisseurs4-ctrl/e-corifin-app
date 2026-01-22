@@ -223,8 +223,8 @@
                             <p id="current-date"></p>
                         </div>
                         <div class="period-selector">
-                            <select id="period-month" onchange="loadDashboard()"></select>
-                            <select id="period-year" onchange="loadDashboard()"></select>
+                            <select id="period-month" onchange="onPeriodChange()"></select>
+                            <select id="period-year" onchange="onPeriodChange()"></select>
                         </div>
                     </div>
 
@@ -514,6 +514,8 @@
                 <button class="btn-close" onclick="closeModal()">×</button>
             </div>
             <form id="budget-form" onsubmit="return saveBudget(event)">
+                <input type="hidden" id="budget-id">
+                
                 <div class="form-group">
                     <label for="budget-category">Catégorie</label>
                     <select id="budget-category" required></select>
@@ -533,8 +535,9 @@
                 </div>
                 
                 <div class="modal-actions">
+                    <button type="button" id="delete-budget-btn" class="btn btn-danger" style="display: none;" onclick="deleteBudget()">Supprimer</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Créer</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
                 </div>
             </form>
         </div>

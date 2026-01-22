@@ -78,6 +78,13 @@ async function loadInitialData() {
  * Initialiser les sélecteurs de période
  */
 function initPeriodSelectors() {
+    // Utiliser la fonction de finances.js si disponible
+    if (typeof initDashboardPeriodSelectors === 'function') {
+        initDashboardPeriodSelectors();
+        return;
+    }
+    
+    // Fallback
     const monthSelect = document.getElementById('period-month');
     const yearSelect = document.getElementById('period-year');
     
