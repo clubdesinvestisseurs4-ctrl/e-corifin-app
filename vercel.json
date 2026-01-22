@@ -1,26 +1,9 @@
 {
   "version": 2,
-  "name": "e-coris",
-  "buildCommand": null,
-  "outputDirectory": "./",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://e-corisfin-api.onrender.com/api/$1",
-      "headers": {
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!assets|css|js|manifest.json|sw.js|favicon.ico).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
