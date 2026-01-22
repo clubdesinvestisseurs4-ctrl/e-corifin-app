@@ -4,7 +4,7 @@
 
 const CONFIG = {
     // API Backend URL - à modifier selon l'environnement
-    API_URL: 'https://your-backend-url.onrender.com/api',
+    API_URL: 'https://e-corisfin-api.onrender.com/api',
     
     // Version de l'application
     VERSION: '1.0.0',
