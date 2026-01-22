@@ -7,24 +7,24 @@
 let chapters = [];
 let currentChapter = null;
 let currentLesson = null;
-let progress = { completed: 0, total: 0, percentage: 0 };
-let hasAccess = false;
+let formationProgress = { completed: 0, total: 0, percentage: 0 };
+let hasFormationAccess = false;
 
 // ==================== VÉRIFICATION D'ACCÈS ====================
 
 /**
  * Vérifier l'accès à la formation
  */
-export async function checkFormationAccess() {
+async function checkFormationAccess() {
     try {
-        const data = await api.courses.getAccessStatus();
-        hasAccess = data.hasAccess;
+        const data = await API.getFormationAccessStatus();
+        hasFormationAccess = data.hasAccess;
         
         updateFormationUI();
-        return hasAccess;
+        return hasFormationAccess;
     } catch (error) {
         console.error('Erreur vérification accès:', error);
-        hasAccess = false;
+        hasFormationAccess = false;
         updateFormationUI();
         return false;
     }
@@ -38,7 +38,7 @@ function updateFormationUI() {
     const contentView = document.getElementById('formation-content');
     
     if (lockedView && contentView) {
-        if (hasAccess) {
+        if (hasFormationAccess) {
             lockedView.style.display = 'none';
             contentView.style.display = 'block';
             loadChapters();
@@ -52,45 +52,28 @@ function updateFormationUI() {
 /**
  * Activer l'accès avec un code
  */
-export async function activateFormation(code) {
+async function activateFormation() {
+    const codeInput = document.getElementById('activate-code');
+    const code = codeInput ? codeInput.value.trim() : '';
+    
+    if (!code) {
+        showToast('Veuillez entrer un code d\'activation', 'error');
+        return;
+    }
+    
     try {
-        showLoading('activate-btn');
-        
-        const response = await api.auth.activateCode(code);
+        // Appeler l'API d'activation
+        const response = await API.post('/auth/activate', { code }, true);
         
         if (response.success) {
-            hasAccess = true;
+            hasFormationAccess = true;
             showToast('Formation activée avec succès !', 'success');
+            closeModal();
             updateFormationUI();
-            closeActivationModal();
         }
     } catch (error) {
         console.error('Erreur activation:', error);
         showToast(error.message || 'Code invalide ou déjà utilisé', 'error');
-    } finally {
-        hideLoading('activate-btn');
-    }
-}
-
-/**
- * Ouvrir le modal d'activation
- */
-export function openActivationModal() {
-    const modal = document.getElementById('activation-modal');
-    if (modal) {
-        modal.classList.add('active');
-        document.getElementById('activation-code')?.focus();
-    }
-}
-
-/**
- * Fermer le modal d'activation
- */
-export function closeActivationModal() {
-    const modal = document.getElementById('activation-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.getElementById('activation-form')?.reset();
     }
 }
 
@@ -99,19 +82,17 @@ export function closeActivationModal() {
 /**
  * Charger les chapitres
  */
-export async function loadChapters() {
-    if (!hasAccess) return;
+async function loadChapters() {
+    if (!hasFormationAccess) return;
     
     try {
-        showLoading('chapters-list');
-        
         const [chaptersData, progressData] = await Promise.all([
-            api.courses.getChapters(),
-            api.courses.getProgress()
+            API.getChapters(),
+            API.getFormationProgress()
         ]);
         
         chapters = chaptersData.chapters || [];
-        progress = progressData;
+        formationProgress = progressData || { completed: 0, total: 0, percentage: 0 };
         
         renderChapters();
         renderProgressBar();
@@ -132,7 +113,10 @@ function renderChapters() {
     if (chapters.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <i class="icon-book"></i>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
                 <p>Aucun contenu disponible pour le moment</p>
             </div>
         `;
@@ -150,9 +134,9 @@ function renderChapters() {
         
         html += `
             <div class="chapter-card ${isCompleted ? 'completed' : ''}" data-id="${chapter.id}">
-                <div class="chapter-header" onclick="window.FormationModule.toggleChapter('${chapter.id}')">
+                <div class="chapter-header" onclick="toggleChapter('${chapter.id}')">
                     <div class="chapter-info">
-                        <span class="chapter-number">Chapitre ${chapter.order}</span>
+                        <span class="chapter-number">Chapitre ${chapter.order || ''}</span>
                         <h3 class="chapter-title">${chapter.title}</h3>
                         <p class="chapter-description">${chapter.description || ''}</p>
                     </div>
@@ -160,14 +144,18 @@ function renderChapters() {
                         <div class="chapter-progress-ring" data-percentage="${percentage}">
                             <svg viewBox="0 0 36 36">
                                 <path class="progress-bg"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#333" stroke-width="3"/>
                                 <path class="progress-fill"
-                                    stroke-dasharray="${percentage}, 100"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#00D9FF" stroke-width="3"
+                                    stroke-dasharray="${percentage}, 100"/>
                             </svg>
                             <span class="progress-text">${percentage}%</span>
                         </div>
-                        <i class="chapter-toggle icon-chevron-down"></i>
+                        <svg class="chapter-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
                     </div>
                 </div>
                 <div class="chapter-lessons" id="chapter-lessons-${chapter.id}">
@@ -190,20 +178,20 @@ function renderProgressBar() {
     const progressText = document.getElementById('formation-progress-text');
     
     if (progressBar) {
-        progressBar.style.width = `${progress.percentage}%`;
+        progressBar.style.width = `${formationProgress.percentage || 0}%`;
     }
     
     if (progressText) {
-        progressText.textContent = `${progress.completed}/${progress.total} leçons complétées`;
+        progressText.textContent = `${formationProgress.completed || 0}/${formationProgress.total || 0} leçons complétées`;
     }
 }
 
 /**
  * Ouvrir/fermer un chapitre
  */
-export async function toggleChapter(chapterId) {
+async function toggleChapter(chapterId) {
     const lessonsContainer = document.getElementById(`chapter-lessons-${chapterId}`);
-    const chapterCard = lessonsContainer?.closest('.chapter-card');
+    const chapterCard = lessonsContainer ? lessonsContainer.closest('.chapter-card') : null;
     
     if (!lessonsContainer || !chapterCard) return;
     
@@ -234,7 +222,7 @@ async function loadLessons(chapterId) {
     if (!container) return;
     
     try {
-        const data = await api.courses.getLessons(chapterId);
+        const data = await API.getLessons(chapterId);
         const lessons = data.lessons || [];
         
         renderLessons(container, lessons);
@@ -244,7 +232,7 @@ async function loadLessons(chapterId) {
         container.innerHTML = `
             <div class="lessons-error">
                 <p>Erreur lors du chargement</p>
-                <button class="btn btn-sm" onclick="window.FormationModule.toggleChapter('${chapterId}')">
+                <button class="btn btn-sm" onclick="toggleChapter('${chapterId}')">
                     Réessayer
                 </button>
             </div>
@@ -272,18 +260,19 @@ function renderLessons(container, lessons) {
         const duration = lesson.duration ? formatDuration(lesson.duration) : '';
         
         html += `
-            <div class="lesson-item ${isCompleted ? 'completed' : ''}" 
-                 onclick="window.FormationModule.openLesson('${lesson.id}')">
+            <div class="lesson-item ${isCompleted ? 'completed' : ''}" onclick="openLesson('${lesson.id}')">
                 <div class="lesson-status">
                     ${isCompleted 
-                        ? '<i class="icon-check-circle"></i>' 
-                        : '<span class="lesson-number">' + lesson.order + '</span>'}
+                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' 
+                        : '<span class="lesson-number">' + (lesson.order || '') + '</span>'}
                 </div>
                 <div class="lesson-info">
                     <span class="lesson-title">${lesson.title}</span>
-                    ${duration ? `<span class="lesson-duration"><i class="icon-clock"></i> ${duration}</span>` : ''}
+                    ${duration ? `<span class="lesson-duration"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${duration}</span>` : ''}
                 </div>
-                <i class="lesson-arrow icon-chevron-right"></i>
+                <svg class="lesson-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
             </div>
         `;
     }
@@ -295,12 +284,13 @@ function renderLessons(container, lessons) {
 /**
  * Ouvrir une leçon
  */
-export async function openLesson(lessonId) {
+async function openLesson(lessonId) {
     try {
-        showView('lesson-view');
-        showLoading('lesson-content');
+        // Afficher la vue leçon
+        document.getElementById('chapters-view').style.display = 'none';
+        document.getElementById('lesson-view').style.display = 'block';
         
-        const data = await api.courses.getLesson(lessonId);
+        const data = await API.getLesson(lessonId);
         currentLesson = data.lesson;
         
         renderLesson();
@@ -308,7 +298,7 @@ export async function openLesson(lessonId) {
     } catch (error) {
         console.error('Erreur chargement leçon:', error);
         showToast('Erreur lors du chargement de la leçon', 'error');
-        showView('chapters-view');
+        closeLesson();
     }
 }
 
@@ -325,8 +315,11 @@ function renderLesson() {
     
     container.innerHTML = `
         <div class="lesson-header">
-            <button class="btn-back" onclick="window.FormationModule.closeLesson()">
-                <i class="icon-arrow-left"></i>
+            <button class="btn-back" onclick="closeLesson()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
                 Retour aux chapitres
             </button>
             <h2 class="lesson-title">${currentLesson.title}</h2>
@@ -340,13 +333,18 @@ function renderLesson() {
         
         <div class="lesson-actions">
             ${!currentLesson.completed ? `
-                <button class="btn btn-primary btn-complete" onclick="window.FormationModule.completeLesson()">
-                    <i class="icon-check"></i>
+                <button class="btn btn-primary btn-complete" onclick="completeLesson()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
                     Marquer comme terminé
                 </button>
             ` : `
                 <div class="lesson-completed-badge">
-                    <i class="icon-check-circle"></i>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
                     Leçon terminée
                 </div>
             `}
@@ -455,11 +453,11 @@ function extractVimeoId(url) {
 /**
  * Marquer une leçon comme terminée
  */
-export async function completeLesson() {
+async function completeLesson() {
     if (!currentLesson || currentLesson.completed) return;
     
     try {
-        await api.courses.completeLesson(currentLesson.id);
+        await API.markLessonComplete(currentLesson.id);
         
         currentLesson.completed = true;
         showToast('Leçon marquée comme terminée !', 'success');
@@ -468,8 +466,8 @@ export async function completeLesson() {
         renderLesson();
         
         // Recharger la progression
-        const progressData = await api.courses.getProgress();
-        progress = progressData;
+        const progressData = await API.getFormationProgress();
+        formationProgress = progressData;
         renderProgressBar();
         
     } catch (error) {
@@ -481,9 +479,10 @@ export async function completeLesson() {
 /**
  * Fermer la leçon et retourner aux chapitres
  */
-export function closeLesson() {
+function closeLesson() {
     currentLesson = null;
-    showView('chapters-view');
+    document.getElementById('lesson-view').style.display = 'none';
+    document.getElementById('chapters-view').style.display = 'block';
     loadChapters(); // Recharger pour mettre à jour la progression
 }
 
@@ -500,52 +499,3 @@ function formatDuration(minutes) {
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
-
-/**
- * Afficher une vue
- */
-function showView(viewId) {
-    document.querySelectorAll('.formation-view').forEach(view => {
-        view.classList.remove('active');
-    });
-    
-    const view = document.getElementById(viewId);
-    if (view) {
-        view.classList.add('active');
-    }
-}
-
-/**
- * Afficher un indicateur de chargement
- */
-function showLoading(elementId) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.dataset.originalContent = el.innerHTML;
-        el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
-    }
-}
-
-/**
- * Masquer l'indicateur de chargement
- */
-function hideLoading(elementId) {
-    const el = document.getElementById(elementId);
-    if (el && el.dataset.originalContent) {
-        el.innerHTML = el.dataset.originalContent;
-    }
-}
-
-// Exposer globalement
-window.FormationModule = {
-    checkFormationAccess,
-    activateFormation,
-    openActivationModal,
-    closeActivationModal,
-    loadChapters,
-    toggleChapter,
-    openLesson,
-    closeLesson,
-    completeLesson,
-    hasAccess: () => hasAccess
-};
