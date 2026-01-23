@@ -422,26 +422,27 @@ a:hover {
     margin-bottom: var(--space-sm);
 }
 
+/* Input Wrapper avec icône */
 .input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.input-icon {
+.input-wrapper .input-icon {
     position: absolute;
-    left: var(--space-md);
+    left: 16px;
     width: 20px;
     height: 20px;
-    color: var(--text-muted);
+    color: var(--accent-gold);
     pointer-events: none;
+    z-index: 1;
+    opacity: 0.7;
 }
 
-.input-wrapper input,
-.input-wrapper select {
+.input-wrapper input {
     width: 100%;
-    padding: var(--space-md);
-    padding-left: 48px;
+    padding: 16px 16px 16px 52px !important;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -455,15 +456,19 @@ a:hover {
     color: var(--text-muted);
 }
 
-.input-wrapper input:focus,
-.input-wrapper select:focus {
+.input-wrapper input:focus {
     outline: none;
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px var(--accent-gold-dim);
     background: var(--bg-tertiary);
 }
 
-/* Inputs sans wrapper */
+.input-wrapper input:focus + .input-icon,
+.input-wrapper:focus-within .input-icon {
+    opacity: 1;
+}
+
+/* Inputs standards (sans wrapper) */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -471,7 +476,7 @@ input[type="number"],
 input[type="date"],
 input[type="tel"] {
     width: 100%;
-    padding: var(--space-md);
+    padding: 16px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -479,6 +484,15 @@ input[type="tel"] {
     font-family: var(--font-main);
     font-size: 1rem;
     transition: all var(--transition-fast);
+}
+
+/* Override pour inputs dans wrapper */
+.input-wrapper input[type="text"],
+.input-wrapper input[type="email"],
+.input-wrapper input[type="password"],
+.input-wrapper input[type="number"],
+.input-wrapper input[type="tel"] {
+    padding-left: 52px !important;
 }
 
 input[type="text"]::placeholder,
