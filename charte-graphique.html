@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Coris Fin - Charte Graphique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0B0E11;
+            --bg-secondary: #121417;
+            --bg-tertiary: #1A1D21;
+            --accent-gold: #F4B84D;
+            --accent-gold-hover: #E6A83A;
+            --accent-gold-light: #F7DDA3;
+            --accent-green: #2DD4BF;
+            --accent-red: #FF6B6B;
+            --accent-orange: #FF9F43;
+            --accent-cauris: #D9BFA0;
+            --text-primary: #E6E9EB;
+            --text-secondary: #A8B0B3;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 40px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #F4B84D 0%, #E6A83A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 60px;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(244, 184, 77, 0.2);
+        }
+        
+        .logo-section {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .logo-box {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(244, 184, 77, 0.1);
+        }
+        
+        .logo-box.dark {
+            background: #1A1D21;
+        }
+        
+        .logo-box img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 16px;
+        }
+        
+        .logo-box p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .colors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .color-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .color-preview {
+            height: 80px;
+        }
+        
+        .color-info {
+            padding: 16px;
+        }
+        
+        .color-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .color-hex {
+            font-family: monospace;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .typography-sample {
+            background: var(--bg-secondary);
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .font-merriweather { font-family: 'Merriweather', serif; }
+        
+        .h1-sample { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+        .h2-sample { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+        .body-sample { font-size: 16px; font-weight: 400; color: var(--text-secondary); }
+        
+        .buttons-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #F4B84D 0%, #E6A83A 100%);
+            color: #0B0E11;
+            box-shadow: 0 6px 18px rgba(244, 184, 77, 0.12);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(244, 184, 77, 0.2);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(230, 168, 58, 0.18);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #FF6B6B 0%, #EF4444 100%);
+            color: white;
+        }
+        
+        .card-example {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(230, 168, 58, 0.12);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-example h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .card-example p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .input-example {
+            width: 100%;
+            padding: 16px;
+            background: rgba(230, 230, 230, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+        
+        .input-example:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(244, 184, 77, 0.12);
+        }
+        
+        .input-example::placeholder {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <h1>E-Coris Fin</h1>
+    <p class="subtitle">Charte Graphique - Design System</p>
+    
+    <div class="section">
+        <h2>🎨 Logo</h2>
+        <div class="logo-section">
+            <div class="logo-box dark">
+                <img src="assets/icon.svg" alt="Logo Icon" style="max-width: 150px;">
+                <p>Logo Icon (icon.svg)</p>
+            </div>
+            <div class="logo-box dark">
+                <img src="assets/logo-ecoris.svg" alt="Logo complet" style="max-width: 250px;">
+                <p>Logo complet (logo-ecoris.svg)</p>
+            </div>
+            <div class="logo-box dark">
+                <img src="assets/favicon.svg" alt="Favicon" style="max-width: 80px;">
+                <p>Favicon (favicon.svg)</p>
+            </div>
+            <div class="logo-box dark">
+                <img src="assets/logo-dark.png" alt="Logo PNG">
+                <p>Logo PNG (logo-dark.png)</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🎨 Palette de Couleurs</h2>
+        <div class="colors-grid">
+            <div class="color-card">
+                <div class="color-preview" style="background: #0B0E11;"></div>
+                <div class="color-info">
+                    <div class="color-name">Fond Principal</div>
+                    <div class="color-hex">#0B0E11</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #121417;"></div>
+                <div class="color-info">
+                    <div class="color-name">Fond Secondaire</div>
+                    <div class="color-hex">#121417</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #F4B84D;"></div>
+                <div class="color-info">
+                    <div class="color-name">Or Principal</div>
+                    <div class="color-hex">#F4B84D</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #E6A83A;"></div>
+                <div class="color-info">
+                    <div class="color-name">Or Hover</div>
+                    <div class="color-hex">#E6A83A</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #F7DDA3;"></div>
+                <div class="color-info">
+                    <div class="color-name">Or Clair / Highlight</div>
+                    <div class="color-hex">#F7DDA3</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #D9BFA0;"></div>
+                <div class="color-info">
+                    <div class="color-name">Cauris / Écru</div>
+                    <div class="color-hex">#D9BFA0</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #2DD4BF;"></div>
+                <div class="color-info">
+                    <div class="color-name">Succès / Vert</div>
+                    <div class="color-hex">#2DD4BF</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #FF6B6B;"></div>
+                <div class="color-info">
+                    <div class="color-name">Danger / Rouge</div>
+                    <div class="color-hex">#FF6B6B</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #FF9F43;"></div>
+                <div class="color-info">
+                    <div class="color-name">Warning / Orange</div>
+                    <div class="color-hex">#FF9F43</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #E6E9EB;"></div>
+                <div class="color-info">
+                    <div class="color-name">Texte Principal</div>
+                    <div class="color-hex">#E6E9EB</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-preview" style="background: #A8B0B3;"></div>
+                <div class="color-info">
+                    <div class="color-name">Texte Secondaire</div>
+                    <div class="color-hex">#A8B0B3</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>✍️ Typographie</h2>
+        <div class="typography-sample font-inter">
+            <div class="h1-sample">Inter - Heading 1 (48px/700)</div>
+            <div class="h2-sample">Inter - Heading 2 (32px/600)</div>
+            <div class="body-sample">Inter - Body text (16px/400) - Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+        <div class="typography-sample font-merriweather">
+            <div class="h2-sample">Merriweather - Éditorial (32px/700)</div>
+            <div class="body-sample">Merriweather - Pour les contenus éditoriaux et citations de prestige.</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🔘 Boutons</h2>
+        <div class="buttons-row">
+            <button class="btn btn-primary">Bouton Principal</button>
+            <button class="btn btn-secondary">Bouton Secondaire</button>
+            <button class="btn btn-danger">Supprimer</button>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>📦 Card & Input</h2>
+        <div class="card-example">
+            <h3>Exemple de Card</h3>
+            <p>Les cards utilisent un fond #121417 avec une bordure subtile dorée et un border-radius de 16px.</p>
+            <input type="text" class="input-example" placeholder="Champ de saisie...">
+        </div>
+    </div>
+</body>
+</html>

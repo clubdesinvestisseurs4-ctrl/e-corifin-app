@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0D1117">
-    <meta name="description" content="E-Coris - Gérez vos finances et apprenez à maîtriser votre argent">
+    <meta name="theme-color" content="#0B0E11">
+    <meta name="description" content="E-Coris Fin - Gérez vos finances et apprenez à maîtriser votre argent">
     
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -12,34 +12,25 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Fonts -->
+    <!-- Fonts - Inter (principale) + Merriweather (éditoriale) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     
-    <title>E-Coris | Gestion Financière & Formation</title>
+    <title>E-Coris Fin | Meilleure plateforme d'éducation financière</title>
 </head>
 <body>
     <!-- Splash Screen -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-logo">
-                <svg viewBox="0 0 100 100" class="logo-svg">
-                    <defs>
-                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00D9FF"/>
-                            <stop offset="100%" style="stop-color:#7B2DFF"/>
-                        </linearGradient>
-                    </defs>
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" stroke-width="3"/>
-                    <text x="50" y="62" text-anchor="middle" fill="url(#logoGradient)" font-size="32" font-weight="700" font-family="Outfit">€</text>
-                </svg>
+                <img src="assets/icon.svg" alt="E-Coris Fin Logo">
             </div>
-            <h1 class="splash-title">E-Coris</h1>
+            <h1 class="splash-title">E-Coris Fin</h1>
             <p class="splash-subtitle">Maîtrisez votre avenir financier</p>
             <div class="splash-loader">
                 <div class="loader-bar"></div>
@@ -60,19 +51,10 @@
             <div class="auth-content">
                 <div class="auth-header">
                     <div class="logo-mark">
-                        <svg viewBox="0 0 60 60">
-                            <defs>
-                                <linearGradient id="authLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#00D9FF"/>
-                                    <stop offset="100%" style="stop-color:#7B2DFF"/>
-                                </linearGradient>
-                            </defs>
-                            <circle cx="30" cy="30" r="28" fill="none" stroke="url(#authLogoGrad)" stroke-width="2"/>
-                            <text x="30" y="38" text-anchor="middle" fill="url(#authLogoGrad)" font-size="24" font-weight="700" font-family="Outfit">€</text>
-                        </svg>
+                        <img src="assets/icon.svg" alt="E-Coris Fin">
                     </div>
-                    <h1>E-Coris</h1>
-                    <p class="tagline">Votre compagnon financier intelligent</p>
+                    <h1>E-Coris Fin</h1>
+                    <p class="tagline">Maîtrisez votre avenir financier</p>
                 </div>
 
                 <!-- Login Form -->
@@ -182,7 +164,7 @@
             <!-- Header -->
             <header class="app-header">
                 <div class="header-left">
-                    <h1 class="app-title">E-Coris</h1>
+                    <h1 class="app-title">E-Coris Fin</h1>
                 </div>
                 <div class="header-right">
                     <button class="btn-icon" onclick="showProfile()" aria-label="Profil">
@@ -395,12 +377,12 @@
                             <div class="progress-overview">
                                 <div class="progress-ring">
                                     <svg viewBox="0 0 100 100">
-                                        <circle cx="50" cy="50" r="45" fill="none" stroke="#2D3748" stroke-width="8"/>
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="#1A1D21" stroke-width="8"/>
                                         <circle id="progress-circle" cx="50" cy="50" r="45" fill="none" stroke="url(#progressGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
                                         <defs>
                                             <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" style="stop-color:#00D9FF"/>
-                                                <stop offset="100%" style="stop-color:#7B2DFF"/>
+                                                <stop offset="0%" style="stop-color:#F4B84D"/>
+                                                <stop offset="100%" style="stop-color:#E6A83A"/>
                                             </linearGradient>
                                         </defs>
                                     </svg>

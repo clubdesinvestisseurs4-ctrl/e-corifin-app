@@ -1,45 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
   <defs>
-    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a0a0f"/>
-      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    <!-- Dégradé doré principal -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F7DDA3"/>
+      <stop offset="25%" style="stop-color:#F4B84D"/>
+      <stop offset="50%" style="stop-color:#E6A83A"/>
+      <stop offset="75%" style="stop-color:#D4941A"/>
+      <stop offset="100%" style="stop-color:#C4842A"/>
     </linearGradient>
-    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00D9FF"/>
-      <stop offset="100%" style="stop-color:#7B2DFF"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+    
+    <!-- Glow effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#F4B84D" flood-opacity="0.3"/>
+    </filter>
   </defs>
   
-  <!-- Background -->
-  <rect width="512" height="512" rx="96" fill="url(#bg-gradient)"/>
+  <!-- Forme extérieure œil/cauris avec pointes effilées -->
+  <path 
+    d="M 5 70 
+       C 5 70, 40 15, 100 15 
+       C 160 15, 195 70, 195 70
+       C 195 70, 160 125, 100 125 
+       C 40 125, 5 70, 5 70 Z" 
+    fill="none" 
+    stroke="url(#goldGradient)" 
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#shadow)"
+  />
   
-  <!-- Decorative orb -->
-  <circle cx="400" cy="120" r="80" fill="#7B2DFF" opacity="0.3" filter="url(#glow)"/>
-  <circle cx="100" cy="400" r="60" fill="#00D9FF" opacity="0.2" filter="url(#glow)"/>
+  <!-- Cercle intérieur -->
+  <circle 
+    cx="100" 
+    cy="70" 
+    r="38" 
+    fill="none" 
+    stroke="url(#goldGradient)" 
+    stroke-width="5"
+  />
   
-  <!-- E letter stylized as a chart -->
-  <g transform="translate(128, 128)">
-    <!-- Main E shape -->
-    <path d="M48 0 L48 256 L208 256 L208 216 L96 216 L96 148 L176 148 L176 108 L96 108 L96 40 L208 40 L208 0 Z" 
-          fill="url(#accent-gradient)" filter="url(#glow)"/>
-    
-    <!-- Rising chart bars -->
-    <rect x="220" y="176" width="24" height="80" rx="4" fill="#00D9FF" opacity="0.8"/>
-    <rect x="252" y="136" width="24" height="120" rx="4" fill="#00D9FF" opacity="0.9"/>
-    <rect x="284" y="96" width="24" height="160" rx="4" fill="url(#accent-gradient)"/>
-    
-    <!-- Trend line -->
-    <path d="M232 180 L264 140 L296 100" 
-          stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
-    
-    <!-- Dot accent -->
-    <circle cx="296" cy="100" r="8" fill="#ffffff" filter="url(#glow)"/>
+  <!-- Symbole € stylisé -->
+  <g transform="translate(100, 70)">
+    <!-- Arc principal du € -->
+    <path 
+      d="M 18 -22 
+         C 18 -22, 8 -32, -8 -32
+         C -28 -32, -32 -16, -32 0
+         C -32 16, -28 32, -8 32
+         C 8 32, 18 22, 18 22" 
+      fill="none" 
+      stroke="url(#goldGradient)" 
+      stroke-width="6"
+      stroke-linecap="round"
+    />
+    <!-- Barres horizontales du € -->
+    <line x1="-30" y1="-8" x2="2" y2="-8" stroke="url(#goldGradient)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-30" y1="8" x2="2" y2="8" stroke="url(#goldGradient)" stroke-width="5" stroke-linecap="round"/>
   </g>
+  
+  <!-- Ligne ondulée horizontale (traversant tout le logo) -->
+  <path 
+    d="M 12 70 
+       Q 30 60, 45 70 
+       Q 60 80, 75 70
+       Q 90 60, 105 70
+       Q 120 80, 135 70
+       Q 150 60, 165 70
+       Q 175 78, 188 70" 
+    fill="none" 
+    stroke="url(#goldGradient)" 
+    stroke-width="3"
+    stroke-linecap="round"
+  />
 </svg>
