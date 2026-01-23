@@ -408,10 +408,10 @@ a:hover {
 }
 
 /* ================================================
-   FORM ELEMENTS
+   FORM ELEMENTS - Enhanced Dark Style
    ================================================ */
 .form-group {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
 }
 
 .form-group label {
@@ -419,7 +419,7 @@ a:hover {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-sm);
 }
 
 .input-wrapper {
@@ -442,8 +442,8 @@ a:hover {
     width: 100%;
     padding: var(--space-md);
     padding-left: 48px;
-    background: var(--bg-input);
-    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: var(--font-main);
@@ -460,6 +460,45 @@ a:hover {
     outline: none;
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px var(--accent-gold-dim);
+    background: var(--bg-tertiary);
+}
+
+/* Inputs sans wrapper */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="tel"] {
+    width: 100%;
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="tel"]::placeholder {
+    color: var(--text-muted);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="tel"]:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px var(--accent-gold-dim);
+    background: var(--bg-tertiary);
 }
 
 .password-toggle {
@@ -482,36 +521,44 @@ a:hover {
     height: 20px;
 }
 
-/* Select without icon */
+/* Select - Enhanced */
 select {
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-input);
-    border: 1px solid var(--border-light);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: var(--font-main);
-    font-size: 0.875rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: all var(--transition-fast);
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8B0B3' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23F4B84D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
+    background-position: right 16px center;
+    padding-right: 48px;
 }
 
 select:focus {
     outline: none;
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px var(--accent-gold-dim);
+    background-color: var(--bg-tertiary);
 }
 
-/* Textarea */
+select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: var(--space-md);
+}
+
+/* Textarea - Enhanced */
 textarea {
     width: 100%;
     padding: var(--space-md);
-    background: var(--bg-input);
-    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: var(--font-main);
@@ -521,10 +568,15 @@ textarea {
     transition: all var(--transition-fast);
 }
 
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
 textarea:focus {
     outline: none;
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px var(--accent-gold-dim);
+    background: var(--bg-tertiary);
 }
 
 /* ================================================
@@ -712,7 +764,7 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-sm) var(--space-lg);
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
@@ -724,6 +776,12 @@ textarea:focus {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+}
+
+.header-logo {
+    height: 44px;
+    width: auto;
+    object-fit: contain;
 }
 
 .app-title {
@@ -840,8 +898,8 @@ textarea:focus {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(11, 14, 17, 0.9);
-    backdrop-filter: blur(4px);
+    background: rgba(11, 14, 17, 0.95);
+    backdrop-filter: blur(8px);
     z-index: 1000;
     animation: fadeIn var(--transition-fast);
 }
@@ -851,16 +909,17 @@ textarea:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-card);
+    background: var(--bg-secondary);
     border-top-left-radius: var(--radius-xl);
     border-top-right-radius: var(--radius-xl);
-    padding: var(--space-lg);
+    padding: var(--space-xl);
     z-index: 1001;
     max-height: 90vh;
     overflow-y: auto;
     animation: slideUp var(--transition-base);
     border: 1px solid var(--border-color);
     border-bottom: none;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
 }
 
 .modal.active {
@@ -871,23 +930,41 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+.modal .form-group {
+    margin-bottom: var(--space-lg);
+}
+
+.modal .form-group label {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    display: block;
 }
 
 .modal-actions {
     display: flex;
     gap: var(--space-md);
-    margin-top: var(--space-lg);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-color);
 }
 
 .modal-actions .btn {
     flex: 1;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
 }
 
 @keyframes fadeIn {
