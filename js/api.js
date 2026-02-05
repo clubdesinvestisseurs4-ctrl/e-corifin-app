@@ -1,19 +1,84 @@
 /**
  * E-Coris - API Service
+ * Avec gestion de session persistante (7 jours)
  */
 
 const API = {
+    // Clés de stockage
+    TOKEN_KEY: 'ecoris_token',
+    TOKEN_EXPIRY_KEY: 'ecoris_token_expiry',
+    USER_KEY: 'ecoris_user',
+    
     // Token management
     getToken: function() {
-        return localStorage.getItem('ecoris_token');
+        const token = localStorage.getItem(this.TOKEN_KEY);
+        const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+        
+        // Vérifier si le token existe et n'est pas expiré
+        if (token && expiry) {
+            const expiryDate = new Date(expiry);
+            if (new Date() < expiryDate) {
+                return token;
+            } else {
+                // Token expiré, nettoyer
+                this.clearSession();
+                return null;
+            }
+        }
+        
+        return token;
     },
     
     setToken: function(token) {
-        localStorage.setItem('ecoris_token', token);
+        localStorage.setItem(this.TOKEN_KEY, token);
+        
+        // Calculer la date d'expiration (7 jours)
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + 7);
+        localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiry.toISOString());
     },
     
     removeToken: function() {
-        localStorage.removeItem('ecoris_token');
+        this.clearSession();
+    },
+    
+    // Gestion utilisateur en cache
+    getCachedUser: function() {
+        const userStr = localStorage.getItem(this.USER_KEY);
+        if (userStr) {
+            try {
+                return JSON.parse(userStr);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    },
+    
+    setCachedUser: function(user) {
+        if (user) {
+            localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        }
+    },
+    
+    clearSession: function() {
+        localStorage.removeItem(this.TOKEN_KEY);
+        localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+        localStorage.removeItem(this.USER_KEY);
+    },
+    
+    // Vérifier si la session est valide localement
+    hasValidSession: function() {
+        const token = localStorage.getItem(this.TOKEN_KEY);
+        const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+        const user = localStorage.getItem(this.USER_KEY);
+        
+        if (!token || !expiry || !user) {
+            return false;
+        }
+        
+        const expiryDate = new Date(expiry);
+        return new Date() < expiryDate;
     },
     
     // Generic request
@@ -37,6 +102,10 @@ const API = {
             const data = await response.json();
             
             if (!response.ok) {
+                // Si erreur d'authentification, nettoyer la session
+                if (response.status === 401 || response.status === 403) {
+                    this.clearSession();
+                }
                 throw new Error(data.error || 'Erreur serveur');
             }
             
@@ -55,6 +124,7 @@ const API = {
         });
         if (data.token) {
             this.setToken(data.token);
+            this.setCachedUser(data.user);
         }
         return data;
     },
@@ -69,12 +139,17 @@ const API = {
         });
         if (data.token) {
             this.setToken(data.token);
+            this.setCachedUser(data.user);
         }
         return data;
     },
     
     getCurrentUser: async function() {
-        return await this.request('/auth/me');
+        const data = await this.request('/auth/me');
+        if (data.user) {
+            this.setCachedUser(data.user);
+        }
+        return data;
     },
     
     activateCode: async function(code) {
@@ -204,4 +279,4 @@ const API = {
 // Exposer globalement
 window.API = API;
 
-console.log('✅ API Service chargé');
+console.log('✅ API Service chargé (session persistante 7j)');

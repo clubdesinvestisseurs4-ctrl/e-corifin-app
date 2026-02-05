@@ -1,5 +1,6 @@
 /**
  * E-Coris - Application principale
+ * Avec initialisation rapide via cache
  */
 
 // État global
@@ -14,10 +15,40 @@ async function initApp() {
     // Initialiser les sélecteurs de période
     initPeriodSelectors();
     
-    // Masquer le splash après un délai
-    setTimeout(hideSplash, 1500);
+    // Vérification rapide de session (sans appel serveur)
+    const hasSession = API.hasValidSession();
     
-    // Vérifier l'authentification
+    if (hasSession) {
+        // Session trouvée - afficher l'app immédiatement avec les données en cache
+        const cachedUser = API.getCachedUser();
+        if (cachedUser) {
+            console.log('⚡ Chargement rapide depuis le cache');
+            window.currentUser = cachedUser;
+            
+            // Masquer le splash rapidement
+            setTimeout(hideSplash, 500);
+            showMainApp();
+            
+            // Charger les données en arrière-plan
+            loadInitialData();
+            
+            // Vérifier la session avec le serveur en arrière-plan
+            checkAuth().then(isValid => {
+                if (!isValid) {
+                    console.log('⚠️ Session expirée côté serveur');
+                    showAuthSection();
+                    showToast('Votre session a expiré, veuillez vous reconnecter', 'info');
+                }
+            });
+            
+            return;
+        }
+    }
+    
+    // Pas de session valide - afficher l'écran de connexion
+    setTimeout(hideSplash, 1000);
+    
+    // Vérifier l'authentification complète
     const isLoggedIn = await checkAuth();
     
     if (isLoggedIn) {
@@ -71,6 +102,12 @@ async function loadInitialData() {
         ]);
     } catch (error) {
         console.error('Erreur chargement initial:', error);
+        
+        // Si erreur d'auth, rediriger vers login
+        if (error.message && (error.message.includes('401') || error.message.includes('auth'))) {
+            API.clearSession();
+            showAuthSection();
+        }
     }
 }
 
@@ -199,6 +236,19 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Gérer la visibilité de la page (refresh session quand l'app revient au premier plan)
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && API.hasValidSession()) {
+        console.log('📱 App revenue au premier plan, vérification session...');
+        checkAuth().then(isValid => {
+            if (!isValid) {
+                showAuthSection();
+                showToast('Votre session a expiré', 'info');
+            }
+        });
+    }
+});
+
 // Exposer globalement
 window.initApp = initApp;
 window.showAuthSection = showAuthSection;
@@ -209,4 +259,4 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.showToast = showToast;
 
-console.log('✅ App module chargé');
+console.log('✅ App module chargé (session persistante)');
